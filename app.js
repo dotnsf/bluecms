@@ -204,51 +204,65 @@ app.post( '/attachment', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /attachment' );
 
-  var filepath = req.file.path;
-  var filetype = req.file.mimetype;
-  var ext = filetype.split( "/" )[1];
-  var name = req.body.name;
-
-  if( name && filepath ){
-    var bin = fs.readFileSync( filepath );
-    var bin64 = new Buffer( bin ).toString( 'base64' );
-    var params = {
-      type: 'attachment',
-      name: name,
-      _attachments: {
-        file: {
-          content_type: filetype,
-          data: bin64
-        }
-      }
-    };
-
-    var options1 = {
-      url: settings.solo_api_url + '/doc',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      json: params
-    };
-    request( options1, ( err1, res1, body1 ) => {
-      fs.unlink( filepath, function( err ){} );
-      if( err1 ){
-        console.log( err1 );
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
         res.end();
       }else{
-        console.log( body1 );
-        res.write( JSON.stringify( { status: true, message: body1 }, 2, null ) );
-        res.end();
+        var filepath = req.file.path;
+        var filetype = req.file.mimetype;
+        var ext = filetype.split( "/" )[1];
+        var name = req.body.name;
+
+        if( name && filepath ){
+          var bin = fs.readFileSync( filepath );
+          var bin64 = new Buffer( bin ).toString( 'base64' );
+          var doc = {
+            type: 'attachment',
+            name: name,
+            _attachments: {
+              file: {
+                content_type: filetype,
+                data: bin64
+              }
+            }
+          };
+
+          if( validateDocType( doc ) ){
+            db.insert( doc, function( err, body ){ //. insert
+              if( err ){
+                fs.unlink( filepath, function( err ){} );
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                fs.unlink( filepath, function( err ){} );
+                res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
+                res.end();
+              }
+            });
+          }else{
+            fs.unlink( filepath, function( err ){} );
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'Invalid doc.type' }, 2, null ) );
+            res.end();
+          }
+        }else{
+          if( filepath ){ fs.unlink( filepath, function( err ){} ); }
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'No name or No file' }, 2, null ) );
+          res.end();
+        }
       }
     });
-  }else{
-    if( filepath ){ fs.unlink( filepath, function( err ){} ); }
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'No name or No file' }, 2, null ) );
-    res.end();
   }
 });
 
@@ -257,21 +271,37 @@ app.get( '/doc/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'GET /doc/' + id );
-  if( db ){
-    db.get( id, { include_docs: true }, function( err, body ){
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
       if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
         res.end();
       }else{
-        res.write( JSON.stringify( { status: true, doc: body }, 2, null ) );
-        res.end();
+        if( db ){
+          db.get( id, { include_docs: true }, function( err, body ){
+            if( err ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+              res.end();
+            }else{
+              res.write( JSON.stringify( { status: true, doc: body }, 2, null ) );
+              res.end();
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
       }
     });
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
   }
 });
 
@@ -279,44 +309,60 @@ app.get( '/attachment/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'GET /attachment/' + id );
-  if( db ){
-    db.get( id, { include_docs: true }, function( err, body ){
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
       if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
         res.end();
       }else{
-        //. body._attachments.(attachname) : { content_type: '', data: '' }
-        if( body._attachments ){
-          for( key in body._attachments ){
-            var attachment = body._attachments[key];
-            if( attachment.content_type ){
-              res.contentType( attachment.content_type );
-            }
+        if( db ){
+          db.get( id, { include_docs: true }, function( err, body ){
+            if( err ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+              res.end();
+            }else{
+              //. body._attachments.(attachname) : { content_type: '', data: '' }
+              if( body._attachments ){
+                for( key in body._attachments ){
+                  var attachment = body._attachments[key];
+                  if( attachment.content_type ){
+                    res.contentType( attachment.content_type );
+                  }
 
-            //. 添付画像バイナリを取得する
-            db.attachment.get( id, key, function( err, buf ){
-              if( err ){
-                res.contentType( 'application/json; charset=utf-8' );
-                res.status( 400 );
-                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-                res.end();
+                  //. 添付画像バイナリを取得する
+                  db.attachment.get( id, key, function( err, buf ){
+                    if( err ){
+                      res.contentType( 'application/json; charset=utf-8' );
+                      res.status( 400 );
+                      res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                      res.end();
+                    }else{
+                      res.end( buf, 'binary' );
+                    }
+                  });
+                }
               }else{
-                res.end( buf, 'binary' );
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'No attachment found.' }, 2, null ) );
+                res.end();
               }
-            });
-          }
+            }
+          });
         }else{
           res.status( 400 );
-          res.write( JSON.stringify( { status: false, message: 'No attachment found.' }, 2, null ) );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
           res.end();
         }
       }
     });
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
   }
 });
 
@@ -324,32 +370,48 @@ app.get( '/docs', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var type = req.query.type;
   console.log( 'GET /docs?type=' + type );
-  if( db ){
-    db.list( { include_docs: true }, function( err, body ){
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
       if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
         res.end();
       }else{
-        var docs = [];
-        body.rows.forEach( function( doc ){
-          var _doc = JSON.parse(JSON.stringify(doc.doc));
-          if( _doc._id.indexOf( '_' ) !== 0 ){
-            if( !type || _doc.type == type ){
-              docs.push( _doc );
+        if( db ){
+          db.list( { include_docs: true }, function( err, body ){
+            if( err ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+              res.end();
+            }else{
+              var docs = [];
+              body.rows.forEach( function( doc ){
+                var _doc = JSON.parse(JSON.stringify(doc.doc));
+                if( _doc._id.indexOf( '_' ) !== 0 ){
+                  if( !type || _doc.type == type ){
+                    docs.push( _doc );
+                  }
+                }
+              });
+      
+              var result = { status: true, docs: docs };
+              res.write( JSON.stringify( result, 2, null ) );
+              res.end();
             }
-          }
-        });
-
-        var result = { status: true, docs: docs };
-        res.write( JSON.stringify( result, 2, null ) );
-        res.end();
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
       }
     });
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
   }
 });
 
@@ -358,80 +420,128 @@ app.delete( '/doc/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'DELETE /doc/' + id );
-  db.get( id, function( err, data ){
-    if( err ){
-      res.status( 400 );
-      res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-      res.end();
-    }else{
-      db.destroy( id, data._rev, function( err, body ){
-        if( err ){
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-          res.end();
-        }else{
-          res.write( JSON.stringify( { status: true }, 2, null ) );
-          res.end();
-        }
-      });
-    }
-  });
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        db.get( id, function( err, data ){
+          if( err ){
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+            res.end();
+          }else{
+            db.destroy( id, data._rev, function( err, body ){
+              if( err ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                res.write( JSON.stringify( { status: true }, 2, null ) );
+                res.end();
+              }
+            });
+          }
+        });
+      }
+    });
+  }
 });
 
 
 app.get( '/searchDocuments', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchDocuments' );
-  if( db ){
-    var q = req.query.q;
-    if( q ){
-      db.search( 'documents', 'newSearch', { q: q }, function( err, body ){
-        if( err ){
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-          res.end();
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          var q = req.query.q;
+          if( q ){
+            db.search( 'documents', 'newSearch', { q: q }, function( err, body ){
+              if( err ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
+                res.end();
+              }
+            });
+          }else{
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
+            res.end();
+          }
         }else{
-          res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
           res.end();
         }
-      });
-    }else{
-      res.status( 400 );
-      res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
-      res.end();
-    }
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
+      }
+    });
   }
 });
 
 app.get( '/searchUsers', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchUsers' );
-  if( db ){
-    var q = req.query.q;
-    if( q ){
-      db.search( 'users', 'newSearch', { q: q }, function( err, body ){
-        if( err ){
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-          res.end();
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          var q = req.query.q;
+          if( q ){
+            db.search( 'users', 'newSearch', { q: q }, function( err, body ){
+              if( err ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
+                res.end();
+              }
+            });
+          }else{
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
+            res.end();
+          }
         }else{
-          res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
           res.end();
         }
-      });
-    }else{
-      res.status( 400 );
-      res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
-      res.end();
-    }
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
+      }
+    });
   }
 });
 
@@ -439,36 +549,56 @@ app.get( '/searchUsers', function( req, res ){
 app.post( '/reset', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /reset' );
-  if( db ){
-    db.list( {}, function( err, body ){
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
       if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else if( user.role > 0 ){{
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Operation not allowed.' }, 2, null ) );
         res.end();
       }else{
-        var docs = [];
-        body.rows.forEach( function( doc ){
-          var _id = doc.id;
-          if( _id.indexOf( '_' ) !== 0 ){
-            var _rev = doc.value.rev;
-            docs.push( { _id: _id, _rev: _rev, _deleted: true } );
-          }
-        });
-        if( docs.length > 0 ){
-          db.bulk( { docs: docs }, function( err ){
-            res.write( JSON.stringify( { status: true, message: docs.length + ' documents are deleted.' }, 2, null ) );
-            res.end();
+        if( db ){
+          db.list( {}, function( err, body ){
+            if( err ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+              res.end();
+            }else{
+              var docs = [];
+              body.rows.forEach( function( doc ){
+                var _id = doc.id;
+                if( _id.indexOf( '_' ) !== 0 ){
+                  var _rev = doc.value.rev;
+                  docs.push( { _id: _id, _rev: _rev, _deleted: true } );
+                }
+              });
+              if( docs.length > 0 ){
+                db.bulk( { docs: docs }, function( err ){
+                  res.write( JSON.stringify( { status: true, message: docs.length + ' documents are deleted.' }, 2, null ) );
+                  res.end();
+                });
+              }else{
+                res.write( JSON.stringify( { status: true, message: 'No documents need to be deleted.' }, 2, null ) );
+                res.end();
+              }
+            }
           });
         }else{
-          res.write( JSON.stringify( { status: true, message: 'No documents need to be deleted.' }, 2, null ) );
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
           res.end();
         }
       }
     });
-  }else{
-    res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-    res.end();
   }
 });
 
