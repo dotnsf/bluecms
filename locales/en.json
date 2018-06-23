@@ -1,4 +1,5 @@
 {
-  "subject": "subject",
-  "body": "body"
+	"subject": "subject",
+	"body": "body",
+	"index.head.title": "index.head.title"
 }

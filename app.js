@@ -80,7 +80,7 @@ app.set( 'views', __dirname + '/templates/' + settings.app_theme );
 app.set( 'view engine', 'ejs' );
 
 i18n.configure({
-  locales: ['en', 'ja'],
+  locales: ['en'],
   directory: __dirname + '/locales'
 });
 app.use( i18n.init );
@@ -198,19 +198,43 @@ app.post( '/adminuser', function( req, res ){
   }
 });
 
-app.get( '/doc/:id', function( req, res ){
+app.get( '/document/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
-  console.log( 'GET /doc/' + id );
+  console.log( 'GET /document/' + id );
 
   if( db ){
-    db.get( id, { include_docs: true }, function( err, body ){
+    db.get( id, { include_docs: true }, function( err, doc ){
       if( err ){
         res.status( 400 );
         res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
         res.end();
       }else{
-        res.write( JSON.stringify( { status: true, doc: body }, 2, null ) );
+        res.write( JSON.stringify( { status: true, doc: doc }, 2, null ) );
+        res.end();
+      }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+    res.end();
+  }
+});
+
+app.get( '/user/:id', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  var id = req.params.id;
+  console.log( 'GET /user/' + id );
+
+  if( db ){
+    db.get( id, { include_docs: true }, function( err, user ){
+      if( err ){
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.end();
+      }else{
+        user.password = '********';
+        res.write( JSON.stringify( { status: true, user: user }, 2, null ) );
         res.end();
       }
     });
@@ -270,8 +294,8 @@ app.get( '/attachment/:id', function( req, res ){
 app.get( '/docs', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var type = req.query.type;
-  var limit = req.query.limit ? req.query.limit = 0;
-  var offset = req.query.offset ? req.query.offset = 0;
+  var limit = req.query.limit ? req.query.limit : 0;
+  var offset = req.query.offset ? req.query.offset : 0;
   console.log( 'GET /docs?type=' + type );
 
   if( db ){
@@ -286,6 +310,7 @@ app.get( '/docs', function( req, res ){
           var _doc = JSON.parse(JSON.stringify(doc.doc));
           if( _doc._id.indexOf( '_' ) !== 0 ){
             if( !type || _doc.type == type ){
+              if( type == 'user' ){ _doc.password = '********'; }
               docs.push( _doc );
             }
           }
@@ -327,9 +352,9 @@ app.use( function( req, res, next ){
 });
 
 
-app.post( '/doc', function( req, res ){
+app.post( '/document', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
-  console.log( 'POST /doc' );
+  console.log( 'POST /document' );
   //console.log( req.body );
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
   if( !token ){
@@ -346,21 +371,83 @@ app.post( '/doc', function( req, res ){
       }else{
         if( db ){
           var doc = req.body;
-          if( validateDocType( doc ) ){
-            db.insert( doc, function( err, body ){ //. insert
-              if( err ){
-                res.status( 400 );
-                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-                res.end();
-              }else{
-                res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
-                res.end();
-              }
-            });
-          }else{
+          if( doc.user && doc.user._id != user._id && user.role > 0 ){
             res.status( 400 );
-            res.write( JSON.stringify( { status: false, message: 'Invalid doc.type' }, 2, null ) );
+            res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
             res.end();
+          }else{
+            doc.user = user;
+            doc.timestamp = ( new Date() ).getTime();
+            if( validateDocType( doc ) ){
+              db.insert( doc, function( err, body ){ //. insert
+                if( err ){
+                  res.status( 400 );
+                  res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                  res.end();
+                }else{
+                  res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
+                  res.end();
+                }
+              });
+            }else{
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: 'Invalid doc.type' }, 2, null ) );
+              res.end();
+            }
+          }
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
+app.post( '/user', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'POST /user' );
+  //console.log( req.body );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          var doc = req.body;
+          if( user.role > 0 ){
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
+            res.end();
+          }else{
+            if( validateDocType( doc ) ){
+              generateHash( doc.password ).then( function( value ){
+                doc.password = value;
+                db.insert( doc, function( err, body ){ //. insert
+                  if( err ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
+                    res.end();
+                  }
+                });
+              });
+            }else{
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: 'Invalid doc.type' }, 2, null ) );
+              res.end();
+            }
           }
         }else{
           res.status( 400 );
@@ -391,15 +478,19 @@ app.post( '/attachment', function( req, res ){
       }else{
         var filepath = req.file.path;
         var filetype = req.file.mimetype;
+        var filename = req.file.originalname;
         var ext = filetype.split( "/" )[1];
         var name = req.body.name;
 
-        if( name && filepath ){
+        if( filename && filepath ){
           var bin = fs.readFileSync( filepath );
           var bin64 = new Buffer( bin ).toString( 'base64' );
           var doc = {
             type: 'attachment',
+            filename: filename,
+            timestamp: ( new Date() ).getTime(),
             name: name,
+            user: user,
             _attachments: {
               file: {
                 content_type: filetype,
@@ -409,7 +500,7 @@ app.post( '/attachment', function( req, res ){
           };
 
           if( validateDocType( doc ) ){
-            db.insert( doc, function( err, body ){ //. insert
+            db.insert( doc, function( err, body ){ //. insert only
               if( err ){
                 fs.unlink( filepath, function( err ){} );
                 res.status( 400 );
@@ -441,10 +532,108 @@ app.post( '/attachment', function( req, res ){
 
 
 
-app.delete( '/doc/:id', function( req, res ){
+app.delete( '/document/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
-  console.log( 'DELETE /doc/' + id );
+  console.log( 'DELETE /document/' + id );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        db.get( id, function( err, doc ){
+          if( err ){
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+            res.end();
+          }else{
+            if( !doc.user || !doc.user._id ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: 'Could not find owner.' }, 2, null ) );
+              res.end();
+            }else{
+              if( doc.user.role == 0 || doc.user._id == user._id ){
+                db.destroy( id, doc._rev, function( err, body ){
+                  if( err ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }else{
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
+                res.end();
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+});
+
+app.delete( '/user/:id', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  var id = req.params.id;
+  console.log( 'DELETE /user/' + id );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        db.get( id, function( err, user ){
+          if( err ){
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+            res.end();
+          }else{
+            if( user.role == 0 ){
+              db.destroy( id, doc._rev, function( err, body ){
+                if( err ){
+                  res.status( 400 );
+                  res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                  res.end();
+                }else{
+                  res.write( JSON.stringify( { status: true }, 2, null ) );
+                  res.end();
+                }
+              });
+            }else{
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
+              res.end();
+            }
+          }
+        });
+      }
+    });
+  }
+});
+
+app.delete( '/attachment/:id', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  var id = req.params.id;
+  console.log( 'DELETE /attachment/' + id );
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
   if( !token ){
     res.status( 401 );
@@ -570,6 +759,50 @@ app.get( '/searchUsers', function( req, res ){
   }
 });
 
+app.get( '/searchAttachments', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'GET /searchAttachments' );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          var q = req.query.q;
+          if( q ){
+            db.search( 'attachments', 'newSearch', { q: q }, function( err, body ){
+              if( err ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
+                res.end();
+              }
+            });
+          }else{
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
+            res.end();
+          }
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
 
 app.post( '/reset', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
@@ -586,7 +819,7 @@ app.post( '/reset', function( req, res ){
         res.status( 401 );
         res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
         res.end();
-      }else if( user.role > 0 ){{
+      }else if( user.role > 0 ){
         res.status( 401 );
         res.write( JSON.stringify( { status: false, result: 'Operation not allowed.' }, 2, null ) );
         res.end();
@@ -654,7 +887,7 @@ function validateDocType( doc ){
       }
       break;
     case 'attachment':
-      if( doc.name && doc._attachment ){
+      if( doc.filename && doc.user && doc._attachment ){
         b = true;
       }
       break;
@@ -685,7 +918,7 @@ function createDesignDocuments(){
     indexes: {
       newSearch: {
         "analyzer": "Japanese",
-        "index": "function (doc) { index( 'default', [doc.title,doc.category,doc.body].join( ' ' ) ); }" };
+        "index": "function (doc) { index( 'default', [doc.title,doc.category,doc.body].join( ' ' ) ); }"
       }
     }
   };
@@ -710,7 +943,7 @@ function createDesignDocuments(){
     indexes: {
       newSearch: {
         "analyzer": "Japanese",
-        "index": "function (doc) { index( 'default', [doc.name,doc.email].join( ' ' ) ); }" };
+        "index": "function (doc) { index( 'default', [doc.name,doc.email].join( ' ' ) ); }"
       }
     }
   };
@@ -735,11 +968,11 @@ function createDesignDocuments(){
     indexes: {
       newSearch: {
         "analyzer": "Japanese",
-        "index": "function (doc) { index( 'default', [doc.name].join( ' ' ) ); }" };
+        "index": "function (doc) { index( 'default', [doc.name,doc.filename].join( ' ' ) ); }"
       }
     }
   };
-  db.insert( design_doc_user, function( err, body ){
+  db.insert( design_doc_attachment, function( err, body ){
     if( err ){
       console.log( "db init: err" );
       console.log( err );

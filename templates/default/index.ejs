@@ -2,181 +2,40 @@
 
 <title><%= __('index.head.title') %></title>
 <script>
-var user_name = null;
-<%
-if( user ){
-  if( user.role == 0 ){
-%>
-window.location.href = '/admin';
-<%
-  }else{
-%>
-user_name = '<%= user.name %>';
-<%
-  }
-}
-%>
 $(function(){
-  if( user_name != null ){
+<%
+  if( user != null ){
+%>
     //. ログインしている
-    $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> ' + user_name + '(Logout)</a></li>' );
+    $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> ' + user.name + '(Logout)</a></li>' );
+<%
   }else{
+%>
     //. ログインしていない
     $('#navbar').html( '<li><a href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>' );
+<%
   }
-
-  document.getElementById( 'file' ).addEventListener( 'change', handleFileSelect, false );
-
-
-  $('#form1').submit( function( event ){
-    event.preventDefault();
-
-    var form = $('#form1').get()[0];
-    var fd = new FormData( form );
-    $.ajax({
-      type: 'POST',
-      url: './upload',
-      data: fd,
-      processData: false,
-      contentType: false,
-      dataType: 'json',
-      success: function( data ){
-        data = JSON.parse( data );
-        console.log( data );
-        if( data ){
-          if( data.status ){
-            alert( data.result );
-            getItems();
-          }else{
-            alert( data.result );
-          }
-        }else{
-          alert( 'error: POST /upload' );
-        }
-      },
-      error: function(){
-        console.log( 'error' );
-      }
-    });
-
-    return false;
-  });
-
-  $('#form2').submit( function( event ){
-    event.preventDefault();
-
-    var data = {
-      id: $('#id').val(),
-      category: $('#category').val(),
-      name: $('#name').val(),
-      source: $('#source').val(),
-      url: $('#url').val(),
-      modified: $('#modified').val(),
-      body: $('#body').val()
-    };
-    //console.log( data );
-
-    $.ajax({
-      type: 'POST',
-      url: './item',
-      data: data,
-      success: function( data ){
-        data = JSON.parse( data );
-        console.log( data );
-        if( data ){
-          if( data.status ){
-            alert( data.result );
-            getItems();
-          }else{
-            alert( data.result );
-          }
-        }else{
-          alert( 'error: POST /item' );
-        }
-      },
-      error: function(){
-        console.log( 'error' );
-      }
-    });
-
-    return false;
-  });
-
-<%
-if( user ){
 %>
-  getItems();
-<%
-}
-%>
+  getDocuments();
 });
 
-function getItems(){
-  $('#items_table_tbody').html( '' );
+function getDocuments(){
+  $('#documents_table_tbody').html( '' );
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/items',
+    url: '/docs?type=documents',
     success: function( result ){
       obj.remove();
-      var items = result.result;
-      items.forEach( item => {
-        var owner_id = '';
-        var n = item.owner.indexOf( '#' );
-        if( n > -1 ){
-          owner_id = item.owner.substring( n + 1, item.owner.length - 1 );
-        }
-
-        var tr = "<tr><td>" + item.id.substring( 0, 10 )
-          + "..</td><td>" + item.rev
-          + "</td><td>" + item.type
-          + "</td><td><a target='_blank' href='" + item.url + "'>" + item.name
-          + "</a></td><td>" + item.hash.substring( 0, 10 )
-          + "..</td><td>" + ( item.comment ? item.comment.substring( 0, 10 ) + '..' : '' )
-          + "</td><td>" + owner_id
-          + "</td><td>" + item.modified
-          + "</td><td>" + item.datetime
-          + "</td><td><input type='button' class='btn btn-default' value='<%= __('items.buttonlabel.delete') %>' onClick='deleteItem(\"" + item.id + "\")'/>"
-          + "</td></tr>";
-        $('#items_table_tbody').append( tr );
-      });
+      if( result.status ){
+        var documents = result.docs;
+      }
     },
     error: function( err ){
       obj.remove();
       console.log( err );
     }
   });
-}
-
-function deleteItem(id){
-  if( window.confirm( '<%= __('items.confirm.delete') %>' + id + ' ?' ) ){
-    $.ajax({
-      type: 'DELETE',
-      url: '/item',
-      data: { id: id },
-      success: function( data ){
-        window.location.href = '/';
-      },
-      error: function(){
-        window.location.href = '/';
-      }
-    });
-  }
-}
-
-function handleFileSelect( evt ){
-  $('#file_name').val( '' );
-  $('#file_modified').val( '' );
-
-  var files = evt.target.files;
-  for( var i = 0; i < files.length; i ++ ){
-    var file = files[i];
-    //console.log( 'i = ' + i );
-    //console.log( file );
-
-    $('#file_name').val( file.name );
-    $('#file_modified').val( file.lastModified );
-  }
 }
 
 function logout(){
@@ -208,7 +67,7 @@ function login(){
 <div class="navbar navbar-default">
   <div class="container">
     <div class="navbar-header">
-      <a href="/" class="navbar-brand">R2B</a>
+      <a href="/" class="navbar-brand">BlueCMS</a>
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -222,68 +81,13 @@ function login(){
   </div>
 </div>
 
-<div class="container">
-  <form method="POST" id="form1" action="./upload" enctype="multipart/form-data">
-    <div class="form-group">
-      <input type="file" id="file" class="form-control" name="data"/><br/>
-<%
-if( user ){
-%>
-      <input type="text" id="user_type" class="form-control" name="user_type" value="" placeholder="<%= __('items.placeholder.user_type') %>"/><br/>
-      <textarea id="comment" class="form-control" name="comment" placeholder="<%= __('items.placeholder.comment') %>"></textarea><br/>
-<%
-}
-%>
-    </div>
-    <input type="hidden" id="file_name" name="file_name" value=""/>
-    <input type="hidden" id="file_modified" name="file_modified" value=""/>
-    <input type="hidden" id="storefile" name="storefile" value="1"/>
-    <input type="submit" value="Upload" class="btn btn-info"/>
-  </form>
-</div>
-
-<!--
-<div class="container">
-  <form method="POST" id="form2" action="./item">
-    <div class="form-group">
-      <input type="text" id="id" class="form-control" name="id" placeholder="<%= __('items.placeholder.id') %>"/><br/>
-      <input type="text" id="url" class="form-control" name="url" placeholder="<%= __('items.placeholder.url') %>"/><br/>
-      <input type="text" id="name" class="form-control" name="name" placeholder="<%= __('items.placeholder.name') %>"/><br/>
-      <input type="text" id="modified" class="form-control" name="modified" placeholder="<%= __('items.placeholder.modified') %>"/><br/>
-      <input type="text" id="user_type" class="form-control" name="user_type" placeholder="<%= __('items.placeholder.user_type') %>"/><br/>
-      <textarea id="comment" class="form-control" name="comment" placeholder="<%= __('items.placeholder.comment') %>"></textarea><br/>
-    </div>
-    <input type="submit" value="Post" class="btn btn-info"/>
-  </form>
-</div>
--->
-
-<%
-if( user ){
-%>
 <div class="container-fluid" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="items_table">
+  <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
-      <tr>
-        <tr><th bgcolor="#ddddff" colspan="10"</th></tr>
-        <th><%= __('items.table.id') %></th>
-        <th><%= __('items.table.rev') %></th>
-        <th><%= __('items.table.type') %></th>
-        <th><%= __('items.table.name') %></th>
-        <th><%= __('items.table.hash') %></th>
-        <th><%= __('items.table.comment') %></th>
-        <th><%= __('items.table.owner') %></th>
-        <th><%= __('items.table.modified') %></th>
-        <th><%= __('items.table.datetime') %></th>
-        <th><%= __('items.table.action') %></th>
-      </tr>
     </thead>
-    <tbody id="items_table_tbody">
+    <tbody id="documents_table_tbody">
     </tbody>
   </table>
 </div>
-<%
-}
-%>
 
 <%- include('./footer', {}) %>
