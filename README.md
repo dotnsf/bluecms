@@ -1,5 +1,7 @@
 # Blue CMS
 
+This product is still under development.
+
 ## Overview
 
 ## Licensing

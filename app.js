@@ -7,6 +7,7 @@ var bodyParser = require( 'body-parser' );
 var crypto = require( 'crypto' );
 var i18n = require( 'i18n' );
 var jwt = require( 'jsonwebtoken' );
+var session = require( 'express-session' );
 var app = express();
 
 var settings = require( './settings' );
@@ -64,11 +65,61 @@ app.use( express.static( __dirname + '/public' ) );
 app.use( bodyParser.urlencoded() );
 app.use( bodyParser.json() );
 
+app.use( session({
+  secret: settings.superSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false,           //. https で使う場合は true
+    maxage: 1000 * 60 * 60   //. 60min
+  }
+}) );
+
+app.set( 'views', __dirname + '/templates/' + settings.app_theme );
+app.set( 'view engine', 'ejs' );
+
 i18n.configure({
   locales: ['en', 'ja'],
   directory: __dirname + '/locales'
 });
 app.use( i18n.init );
+
+app.get( '/', function( req, res ){
+  if( req.session && req.session.token ){
+    var token = req.session.token;
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( !err && user ){
+        res.render( 'index', { user: user, theme: settings.app_theme } );
+      }else{
+        res.render( 'index', { user: null, theme: settings.app_theme } );
+      }
+    });
+  }else{
+    res.render( 'index', { user: null, theme: settings.app_theme } );
+  }
+});
+
+app.get( '/admin', function( req, res ){
+  if( req.session && req.session.token ){
+    var token = req.session.token;
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err || !user ){
+        //res.render( 'login', { message: 'Invalid token.' } );
+        res.redirect( '/login?message=Invalid token.' );
+      }else{
+        res.render( 'admin', { user: user, theme: settings.app_theme } );
+      }
+    });
+  }else{
+    res.redirect( '/login' );
+  }
+});
+
+app.get( '/login', function( req, res ){
+  var message = ( req.query.message ? req.query.message : '' );
+  res.render( 'login', { message: message, theme: settings.app_theme } );
+});
 
 app.post( '/login', function( req, res ){
   res.contentType( 'application/json' );
@@ -98,6 +149,11 @@ app.post( '/login', function( req, res ){
       }
     });
   });
+});
+
+app.get( '/logout', function( req, res ){
+  req.session.token = null;
+  res.redirect( '/' );
 });
 
 app.post( '/adminuser', function( req, res ){
@@ -214,6 +270,8 @@ app.get( '/attachment/:id', function( req, res ){
 app.get( '/docs', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var type = req.query.type;
+  var limit = req.query.limit ? req.query.limit = 0;
+  var offset = req.query.offset ? req.query.offset = 0;
   console.log( 'GET /docs?type=' + type );
 
   if( db ){
@@ -232,6 +290,10 @@ app.get( '/docs', function( req, res ){
             }
           }
         });
+
+        if( offset || limit ){
+          docs = docs.slice( offset, offset + limit );
+        }
       
         var result = { status: true, docs: docs };
         res.write( JSON.stringify( result, 2, null ) );
@@ -582,7 +644,7 @@ function validateDocType( doc ){
   if( doc && doc.type ){
     switch( type ){
     case 'document':
-      if( doc.title && doc.body && doc.user_id && doc.timestamp ){
+      if( doc.title && doc.body && doc.user && doc.timestamp ){
         b = true;
       }
       break;
@@ -602,8 +664,12 @@ function validateDocType( doc ){
   return b;
 }
 
-function sortDocuments( _docs ){
-  return _docs;
+function compareByTimestamp( a, b ){
+  var r = 0;
+  if( a.timestamp < b.timestamp ){ r = -1; }
+  else if( a.timestamp > b.timestamp ){ r = 1; }
+
+  return r;
 }
 
 function createDesignDocuments(){
