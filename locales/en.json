@@ -1,5 +1,9 @@
 {
 	"subject": "subject",
 	"body": "body",
-	"index.head.title": "index.head.title"
+	"index.head.title": "index.head.title",
+	"login.head.title": "login.head.title",
+	"login.login": "login.login",
+	"login.placeholder.userid": "login.placeholder.userid",
+	"login.placeholder.password": "login.placeholder.password"
 }
