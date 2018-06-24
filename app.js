@@ -86,18 +86,26 @@ i18n.configure({
 app.use( i18n.init );
 
 app.get( '/', function( req, res ){
-  if( req.session && req.session.token ){
-    var token = req.session.token;
-    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
-      if( !err && user ){
-        res.render( 'index', { user: user, theme: settings.app_theme } );
-      }else{
-        res.render( 'index', { user: null, theme: settings.app_theme } );
-      }
-    });
-  }else{
-    res.render( 'index', { user: null, theme: settings.app_theme } );
-  }
+  db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
+    var title = 'BlueCMS';
+    var desc = 'Opensource Simple Content Management System based on Node.js + IBM Cloudant.';
+    if( !err ){
+       title = doc.title;
+       desc = doc.desc;
+    }
+    if( req.session && req.session.token ){
+      var token = req.session.token;
+      jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+        if( !err && user ){
+          res.render( 'index', { user: user, title: title, desc: desc, theme: settings.app_theme } );
+        }else{
+          res.render( 'index', { user: null, title: title, desc: desc, theme: settings.app_theme } );
+        }
+      });
+    }else{
+      res.render( 'index', { user: null, title: title, desc: desc, theme: settings.app_theme } );
+    }
+  });
 });
 
 app.get( '/admin', function( req, res ){
@@ -108,7 +116,15 @@ app.get( '/admin', function( req, res ){
         //res.render( 'login', { message: 'Invalid token.' } );
         res.redirect( '/login?message=Invalid token.' );
       }else{
-        res.render( 'admin', { user: user, theme: settings.app_theme } );
+        db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
+          var title = '';
+          var desc = '';
+          if( !err ){
+             title = doc.title;
+             desc = doc.desc;
+          }
+          res.render( 'admin', { user: user, title: title, desc: desc, theme: settings.app_theme } );
+        });
       }
     });
   }else{
@@ -132,19 +148,23 @@ app.post( '/login', function( req, res ){
 
     db.get( user_id, { include_docs: true }, function( err, user ){
       if( err ){
-        res.status( 401 );
-        res.write( JSON.stringify( { status: false, result: 'Not valid user_id/password.' }, 2, null ) );
-        res.end();
+        res.redirect( '/login?message=Not valid user_id or password.' );
+        //res.status( 401 );
+        //res.write( JSON.stringify( { status: false, result: 'Not valid user_id/password.' }, 2, null ) );
+        //res.end();
       }else{
         if( user_id && password && user.password == password ){
           var token = jwt.sign( user, app.get( 'superSecret' ), { expiresIn: '25h' } );
+          req.session.token = token;
+          res.redirect( '/admin' );
 
-          res.write( JSON.stringify( { status: true, token: token }, 2, null ) );
-          res.end();
+          //res.write( JSON.stringify( { status: true, token: token }, 2, null ) );
+          //res.end();
         }else{
-          res.status( 401 );
-          res.write( JSON.stringify( { status: false, result: 'Not valid user_id/password.' }, 2, null ) );
-          res.end();
+          res.redirect( '/login?message=Not valid user_id or password.' );
+          //res.status( 401 );
+          //res.write( JSON.stringify( { status: false, result: 'Not valid user_id/password.' }, 2, null ) );
+          //res.end();
         }
       }
     });
@@ -158,7 +178,7 @@ app.get( '/logout', function( req, res ){
 
 app.post( '/adminuser', function( req, res ){
   res.contentType( 'application/json' );
-  var user_id = 'admin'; //req.body.id;
+  var user_id = req.body.id ? req.body.id : 'admin'; //req.body.id;
   var password = req.body.password;
   if( !password ){
     res.status( 401 );
@@ -171,12 +191,15 @@ app.post( '/adminuser', function( req, res ){
 
       db.get( user_id, { include_docs: true }, function( err, user ){
         if( err ){
+          var name = req.body.name ? req.body.name : user_id;
+          var email = req.body.email ? req.body.email : 'admin@admin';
+        
           var user = {
             _id: user_id,
             password: password,
-            name: 'admin',
+            name: name,
             role: 0,
-            email: 'admin@admin'
+            email: email
           };
           db.insert( user, function( err, body ){
             if( err ){
@@ -324,6 +347,29 @@ app.get( '/docs', function( req, res ){
         res.write( JSON.stringify( result, 2, null ) );
         res.end();
       }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+    res.end();
+  }
+});
+
+app.get( '/titleDesc', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'GET /titleDesc' );
+
+  if( db ){
+    db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
+      if( err ){
+        doc = {
+          title: '',
+          desc: ''
+        };
+      }
+console.log( doc );
+      res.write( JSON.stringify( { status: true, doc: doc }, 2, null ) );
+      res.end();
     });
   }else{
     res.status( 400 );
@@ -671,6 +717,70 @@ app.delete( '/attachment/:id', function( req, res ){
 });
 
 
+app.post( '/titleDesc', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'POST /setTitleDesc' );
+  //console.log( req.body );
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          if( user.role > 0 ){
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
+            res.end();
+          }else{
+            var title = req.body.title;
+            var desc = req.body.desc;
+            if( title && desc ){
+              var doc = {
+                _id: 'titleDesc',
+                title: title,
+                desc: desc
+              };
+              db.get( 'titleDesc', { include_docs: true }, function( err, result ){
+                if( !err ){
+                  doc._rev = result._rev;
+                }
+
+                db.insert( doc, function( err, body ){ //. insert
+                  if( err ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
+                    res.end();
+                  }
+                });
+              });
+            }else{
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: 'Parameter title & desc required.' }, 2, null ) );
+              res.end();
+            }
+          }
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
+
 app.get( '/searchDocuments', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchDocuments' );
@@ -882,7 +992,7 @@ function validateDocType( doc ){
       }
       break;
     case 'user':
-      if( doc._id && doc.password && doc.name && doc.email && doc.role ){
+      if( doc._id && doc.password && doc.name && doc.email && ( "role" in doc ) ){
         b = true;
       }
       break;

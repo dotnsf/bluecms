@@ -1,57 +1,48 @@
 <%- include('./header', {}) %>
 
-<title><%= __('admin.head.title') %></title>
+<title><%= __('admin.head.admin') %> - <%= title %></title>
 <script>
 $(function(){
+  //. ログインしている
+  $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> ' + user.name + '(Logout)</a></li>' );
+
+<%
+if( user.role == 0 ){
+%>
   getUsers();
-  getItems();
+<%
+}
+%>
+  getDocuments();
+  getAttachments();
 });
 
-function logout(){
-  var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
-  $.ajax({
-    type: 'POST',
-    url: '/logout',
-    data: {},
-    success: function( data ){
-      obj.remove();
-      window.location.href = '/';
-    },
-    error: function(){
-      obj.remove();
-      window.location.href = '/';
-    }
-  });
-}
-
 function getUsers(){
+  $('#users_table_tbody').html( '' );
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/users',
+    url: '/docs?type=users',
     success: function( result ){
       obj.remove();
-      //users = JSON.parse( users );
-      //console.log( users );
-      var users = result.result;
-      users.forEach( user => {
-        var tr = "<tr><td>" + user.id + "</td><td>********</td><td>" + user.name + "</td><td>" + abbreviateArray( user.type ) + "</td><td> " + abbreviateArray( user.email ) + "</td><td>" + user.role + "</td><td>" + user.created + "</td><td>" + user.loggedin + "</td>";
-        tr += "<td><input type='button' class='btn btn-default' value='<%= __('users.buttonlabel.delete') %>' onClick='deleteUser(\"" + user.id + "\")'/></td>";
-        tr += "</tr>";
+console.log( result );
+      if( result.status ){
         $('#users_table_tbody').append( tr );
-      });
-      var tr = "<tr>"
-        + "<td><input type='text' id='user_id' placeholder='<%= __('users.placeholder.id') %>'/></td>"
-        + "<td><input type='password' id='user_password' placeholder='<%= __('users.placeholder.password') %>'/></td>"
-        + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name') %>'/></td>"
-        + "<td><input type='text' id='user_type' placeholder='<%= __('users.placeholder.type') %>'/></td>"
-        + "<td><input type='text' id='user_email' placeholder='<%= __('users.placeholder.email') %>'/></td>"
-        + "<td><input type='text' id='user_role' placeholder='<%= __('users.placeholder.role') %>' value='1'/></td>"
-        + "<td><!-- <input type='text' id='user_created' placeholder='<%= __('users.placeholder.created') %>'/> --> - </td>"
-        + "<td><!-- <input type='text' id='user_loggedin' placeholder='<%= __('users.placeholder.loggedin') %>'/> --> - </td>"
-        + "<td><input type='button' class='btn btn-default' value='<%= __('users.buttonlabel.add') %>' onClick='addUser();'/></td>"
-        + "</tr>"
-      $('#users_table_tbody').append( tr );
+        var users = result.docs;
+        var cnt = 1;
+        users.forEach( function( user ){
+          var tr = '<tr>'
+            + '<td>' + ( cnt ++ ) + '</td>'
+            + '<td>' + user._id + '</td>'
+            + '<td>' + user.password + '</td>'
+            + '<td>' + user.name + '</td>'
+            + '<td>' + user.email + '</td>'
+            + '<td>' + user.role + '</td>'
+            + '<td></td>'
+            + '</tr>';
+          $('#users_table_tbody').append( tr );
+        });
+      }
     },
     error: function( err ){
       obj.remove();
@@ -60,68 +51,31 @@ function getUsers(){
   });
 }
 
-function addUser(){
-  var id = $('#user_id').val();
-  var password = $('#user_password').val();
-  var name = $('#user_name').val();
-  var type = $('#user_type').val();
-  var email = $('#user_email').val();
-  var role = $('#user_role').val();
-
-  var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
-  $.ajax({
-    type: 'POST',
-    url: '/user',
-    data: { id: id, password: password, name: name, type: type, email: email, role: role },
-    success: function( data ){
-      obj.remove();
-      window.location.href = '/';
-    },
-    error: function(){
-      obj.remove();
-      window.location.href = '/';
-    }
-  });
-}
-
-function deleteUser(id){
-  if( window.confirm( '<%= __('users.confirm.delete') %>' + id + ' ?' ) ){
-    var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
-    $.ajax({
-      type: 'DELETE',
-      url: '/user',
-      data: { id: id },
-      success: function( data ){
-        obj.remove();
-        window.location.href = '/';
-      },
-      error: function(){
-        obj.remove();
-        window.location.href = '/';
-      }
-    });
-  }
-}
-
-
-function getItems(){
+function getDocuments(){
+  $('#documents_table_tbody').html( '' );
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/items',
+    url: '/docs?type=documents',
     success: function( result ){
+console.log( result );
       obj.remove();
-      var items = result.result;
-      items.forEach( item => {
-        var owner_id = '';
-        var n = item.owner.indexOf( '#' );
-        if( n > -1 ){
-          owner_id = item.owner.substring( n + 1, item.owner.length - 1 );
-        }
-        console.log( item );
-        var tr = "<tr><td>" + item.id.substring( 0, 10 ) + "..</td><td>" + item.rev + "</td><td>" + item.name + "</td><td>" + item.hash.substring( 0, 10 ) + "..</td><td>" + owner_id + "</td><td>" + item.modified + "</td><td>" + item.datetime + "</td></tr>";
-        $('#items_table_tbody').append( tr );
-      });
+      if( result.status ){
+        var documents = result.docs;
+        var cnt = 1;
+        documents.forEach( function( doc ){
+          var tr = '<tr>'
+            + '<td>' + ( cnt ++ ) + '</td>'
+            + '<td>' + doc._id + '</td>'
+            + '<td>' + doc.title + '</td>'
+            + '<td>' + doc.body + '</td>'
+            + '<td>' + doc.user.name + '</td>'
+            + '<td>' + doc.timestamp + '</td>'
+            + '<td></td>'
+            + '</tr>';
+          $('#documents_table_tbody').append( tr );
+        });
+      }
     },
     error: function( err ){
       obj.remove();
@@ -130,15 +84,46 @@ function getItems(){
   });
 }
 
+function getAttachments(){
+  $('#attachments_table_tbody').html( '' );
+  var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
+  $.ajax({
+    type: 'GET',
+    url: '/docs?type=attachments',
+    success: function( result ){
+      obj.remove();
+console.log( result );
+      if( result.status ){
+        var attachments = result.docs;
+        var cnt = 1;
+        attachments.forEach( function( attachment ){
+          var tr = '<tr>'
+            + '<td>' + ( cnt ++ ) + '</td>'
+            + '<td>' + attachment.filename + '</td>'
+            + '<td>' + attachment.name + '</td>'
+            + '<td>' + attachment.user.name + '</td>'
+            + '<td>' + attachment.timestamp + '</td>'
+            + '<td>' + attachment._id + '</td>'
+            + '<td></td>'
+            + '</tr>';
+          $('#attachments_table_tbody').append( tr );
+        });
+      }
+    },
+    error: function( err ){
+      obj.remove();
+      console.log( err );
+    }
+  });
+}
 
-function tradeItem( item ){
-  if( window.confirm( '<%= __('items.confirm.trade') %>' + item.id + ' ?' ) ){
-    var new_owner_id = $('#new_owner_id_for_'+item.id).val();
+function logout(){
+  if( window.confirm( 'Logout?' ) ){
     var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
     $.ajax({
       type: 'POST',
-      url: '/trade',
-      data: { item_id: item.id, user_id: new_owner_id },
+      url: '/logout',
+      data: {},
       success: function( data ){
         obj.remove();
         window.location.href = '/';
@@ -151,57 +136,80 @@ function tradeItem( item ){
   }
 }
 </script>
-<style>
-html, body, {
-  background-color: #ddddff;
-  height: 100%;
-  margin: 0px;
-  padding: 0px
-}
-</style>
 </head>
 <body>
 
-<%- include('./nav', {}) %>
+<div class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a href="/" class="navbar-brand"><%= title %></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse target">
+      <ul class="nav navbar-nav navbar-right" id="navbar">
+      </ul>
+    </div>
+  </div>
+</div>
 
+<%
+if( user.role == 0 ){
+%>
 <div class="container-fluid" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="users_table">
+  <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
       <tr>
-        <tr><th bgcolor="#ddddff" colspan="9"><%= __('users.table.title') %></th></tr>
-        <th><%= __('users.table.id') %></th>
-        <th><%= __('users.table.password') %></th>
-        <th><%= __('users.table.name') %></th>
-        <th><%= __('users.table.type') %></th>
-        <th><%= __('users.table.email') %></th>
-        <th><%= __('users.table.role') %></th>
-        <th><%= __('users.table.created') %></th>
-        <th><%= __('users.table.loggedin') %></th>
-        <th><%= __('users.table.action') %></th>
+      <th>#</th>
+      <th><%= __('admin.body.users.table.thead.id') %></th>
+      <th><%= __('admin.body.users.table.thead.password') %></th>
+      <th><%= __('admin.body.users.table.thead.name') %></th>
+      <th><%= __('admin.body.users.table.thead.email') %></th>
+      <th><%= __('admin.body.users.table.thead.role') %></th>
+      <th><%= __('admin.body.users.table.thead.actions') %></th>
       </tr>
     </thead>
     <tbody id="users_table_tbody">
     </tbody>
   </table>
 </div>
-
-<hr/>
+<%
+}
+%>
 
 <div class="container-fluid" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="items_table">
+  <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
       <tr>
-        <tr><th bgcolor="#ddddff" colspan="7"</th></tr>
-        <th><%= __('items.table.id') %></th>
-        <th><%= __('items.table.rev') %></th>
-        <th><%= __('items.table.name') %></th>
-        <th><%= __('items.table.hash') %></th>
-        <th><%= __('items.table.owner') %></th>
-        <th><%= __('items.table.modified') %></th>
-        <th><%= __('items.table.datetime') %></th>
+      <th>#</th>
+      <th><%= __('admin.body.documents.table.thead.title') %></th>
+      <th><%= __('admin.body.documents.table.thead.body') %></th>
+      <th><%= __('admin.body.documents.table.thead.user.name') %></th>
+      <th><%= __('admin.body.documents.table.thead.timestamp') %></th>
+      <th><%= __('admin.body.documents.table.thead.actions') %></th>
       </tr>
     </thead>
-    <tbody id="items_table_tbody">
+    <tbody id="documents_table_tbody">
+    </tbody>
+  </table>
+</div>
+
+<div class="container-fluid" style="padding:20px 0; font-size:8px;">
+  <table class="table table-hover table-bordered" id="documents_table">
+    <thead class="table-inverse">
+      <tr>
+      <th>#</th>
+      <th><%= __('admin.body.attachments.table.thead.filename') %></th>
+      <th><%= __('admin.body.attachments.table.thead.name') %></th>
+      <th><%= __('admin.body.attachments.table.thead.user.name') %></th>
+      <th><%= __('admin.body.attachments.table.thead.timestamp') %></th>
+      <th><%= __('admin.body.attachments.table.thead.actions') %></th>
+      </tr>
+    </thead>
+    <tbody id="attachments_table_tbody">
     </tbody>
   </table>
 </div>

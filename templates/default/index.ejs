@@ -1,6 +1,6 @@
 <%- include('./header', {}) %>
 
-<title><%= __('index.head.title') %></title>
+<title><%= title %></title>
 <script>
 $(function(){
 <%
@@ -67,7 +67,7 @@ function login(){
 <div class="navbar navbar-default">
   <div class="container">
     <div class="navbar-header">
-      <a href="/" class="navbar-brand">BlueCMS</a>
+      <a href="/" class="navbar-brand"><%= title %></a>
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -79,6 +79,11 @@ function login(){
       </ul>
     </div>
   </div>
+</div>
+
+<div class="jumbotron">
+  <h1><%= title %></h1>
+  <p><%= desc %></p>
 </div>
 
 <div class="container-fluid" style="padding:20px 0; font-size:8px;">
