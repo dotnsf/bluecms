@@ -22,5 +22,13 @@
 	"admin.body.attachments.table.thead.name": "admin.body.attachments.table.thead.name",
 	"admin.body.attachments.table.thead.user.name": "admin.body.attachments.table.thead.user.name",
 	"admin.body.attachments.table.thead.timestamp": "admin.body.attachments.table.thead.timestamp",
-	"admin.body.attachments.table.thead.actions": "admin.body.attachments.table.thead.actions"
+	"admin.body.attachments.table.thead.actions": "admin.body.attachments.table.thead.actions",
+	"users.buttonlabel.edit": "users.buttonlabel.edit",
+	"users.buttonlabel.delete": "users.buttonlabel.delete",
+	"users.placeholder.id": "users.placeholder.id",
+	"users.placeholder.password": "users.placeholder.password",
+	"users.placeholder.name": "users.placeholder.name",
+	"users.placeholder.email": "users.placeholder.email",
+	"users.placeholder.role": "users.placeholder.role",
+	"users.buttonlabel.update": "users.buttonlabel.update"
 }

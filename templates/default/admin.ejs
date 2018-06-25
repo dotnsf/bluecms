@@ -4,7 +4,7 @@
 <script>
 $(function(){
   //. ログインしている
-  $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> ' + user.name + '(Logout)</a></li>' );
+  $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
 
 <%
 if( user.role == 0 ){
@@ -38,10 +38,23 @@ console.log( result );
             + '<td>' + user.name + '</td>'
             + '<td>' + user.email + '</td>'
             + '<td>' + user.role + '</td>'
-            + '<td></td>'
+            + '<td>'
+            + "<input type='button' value='<%= __('users.buttonlabel.edit') %>' class='btn btn-success' onClick='editUser(" + JSON.stringify(user) + ")'>"
+            + "<input type='button' value='<%= __('users.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteUser(\"" + user.id + "\")'/>"
+            + '</td>'
             + '</tr>';
           $('#users_table_tbody').append( tr );
         });
+        var tr = "<tr>"
+          + '<td>-</td>'
+          + "<td><input type='text' id='user_id' placeholder='<%= __('users.placeholder.id' ) %>'/></td>"
+          + "<td><input type='password' id='user_password' placeholder='<%= __('users.placeholder.password' ) %>'/></td>"
+          + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
+          + "<td><input type='text' id='user_email' placeholder='<%= __('users.placeholder.email' ) %>'/></td>"
+          + "<td><input type='text' id='user_role' placeholder='<%= __('users.placeholder.role' ) %>'/></td>"
+          + "<td><input type='button' class='btn btn-primary' value='<%= __('users.buttonlabel.update') %>' onClick='updateUser();'/></td>"
+          + "</tr>";
+        $('#users_table_tbody').append( tr );
       }
     },
     error: function( err ){
@@ -135,6 +148,47 @@ function logout(){
     });
   }
 }
+
+function updateUser(){
+  var id = $('#user_id').val();
+  var password = $('#user_password').val();
+  var name = $('#user_name').val();
+  var email = $('#user_email').val();
+  var role = $('#user_role').val();
+  console.log( 'updateUser(): id=' + id + ', name=' + name + ', role=' + role );
+
+  $.ajax({
+    type: 'POST',
+    url: '/user',
+    data: { _id: id, password: password, name: name, email: email, role: role },
+    success: function( data ){
+      console.log( data );
+      getUsers();
+    },
+    error: function(){
+      console.log( 'updateUser: error' );
+    }
+  });
+}
+
+function deleteUser(id){
+  if( window.confirm( 'Delete User?' ) ){
+    console.log( 'deleteUser(): id=' + id );
+
+    $.ajax({
+      type: 'DELETE',
+      url: '/user/' + id,
+      data: {},
+      success: function( data ){
+        window.location.href = '/';
+      },
+      error: function(){
+        window.location.href = '/';
+      }
+    });
+  }
+}
+
 </script>
 </head>
 <body>
