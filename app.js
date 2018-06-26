@@ -1022,7 +1022,7 @@ function createDesignDocuments(){
     _id: "_design/documents",
     language: "javascript",
     views: {
-      bytimestamp: {
+      by_id: {
         map: "function (doc) { if( doc.type && doc.type == 'document' ){ emit(doc._id, doc); } }"
       }
     },
@@ -1047,7 +1047,7 @@ function createDesignDocuments(){
     _id: "_design/users",
     language: "javascript",
     views: {
-      bytimestamp: {
+      by_id: {
         map: "function (doc) { if( doc.type && doc.type == 'user' ){ emit(doc._id, doc); } }"
       }
     },
@@ -1072,7 +1072,7 @@ function createDesignDocuments(){
     _id: "_design/attachments",
     language: "javascript",
     views: {
-      bytimestamp: {
+      by_id: {
         map: "function (doc) { if( doc.type && doc.type == 'attachment' ){ emit(doc._id, doc); } }"
       }
     },
