@@ -193,9 +193,10 @@ app.post( '/adminuser', function( req, res ){
         if( err ){
           var name = req.body.name ? req.body.name : user_id;
           var email = req.body.email ? req.body.email : 'admin@admin';
-        
+
           var user = {
             _id: user_id,
+            type: 'user',
             password: password,
             name: name,
             role: 0,
@@ -342,7 +343,7 @@ app.get( '/docs', function( req, res ){
         if( offset || limit ){
           docs = docs.slice( offset, offset + limit );
         }
-      
+
         var result = { status: true, docs: docs };
         res.write( JSON.stringify( result, 2, null ) );
         res.end();
