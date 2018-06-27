@@ -117,8 +117,8 @@ app.get( '/admin', function( req, res ){
         res.redirect( '/login?message=Invalid token.' );
       }else{
         db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
-          var title = '';
-          var desc = '';
+          var title = 'BlueCMS';
+          var desc = 'Opensource Simple Content Management System based on Node.js + IBM Cloudant.';
           if( !err ){
              title = doc.title;
              desc = doc.desc;
@@ -171,9 +171,11 @@ app.post( '/login', function( req, res ){
   });
 });
 
-app.get( '/logout', function( req, res ){
+app.post( '/logout', function( req, res ){
   req.session.token = null;
-  res.redirect( '/' );
+  //res.redirect( '/' );
+  res.write( JSON.stringify( { status: true }, 2, null ) );
+  res.end();
 });
 
 app.post( '/adminuser', function( req, res ){
@@ -383,19 +385,24 @@ console.log( doc );
 //. ここより上で定義する API には認証フィルタをかけない
 //. ここより下で定義する API には認証フィルタをかける
 app.use( function( req, res, next ){
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
-  if( !token ){
-    return res.status( 403 ).send( { status: false, result: 'No token provided.' } );
-  }
-
-  jwt.verify( token, app.get( 'superSecret' ), function( err, decoded ){
-    if( err ){
-      return res.json( { status: false, result: 'Invalid token.' } );
+  if( req.session && req.session.token ){
+    //. トークンをデコード
+    var token = req.session.token;
+    if( !token ){
+      return res.status( 403 ).send( { status: false, result: 'No token provided.' } );
     }
 
-    req.decoded = decoded;
-    next();
-  });
+    jwt.verify( token, app.get( 'superSecret' ), function( err, decoded ){
+      if( err ){
+        return res.json( { status: false, result: 'Invalid token.' } );
+      }
+
+      req.decoded = decoded;
+      next();
+    });
+  }else{
+    return res.status( 403 ).send( { status: false, result: 'No token provided.' } );
+  }
 });
 
 
@@ -403,7 +410,7 @@ app.post( '/document', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /document' );
   //console.log( req.body );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -456,7 +463,7 @@ app.post( '/user', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /user' );
   //console.log( req.body );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -510,7 +517,7 @@ app.post( '/attachment', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /attachment' );
 
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -583,7 +590,7 @@ app.delete( '/document/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'DELETE /document/' + id );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -635,7 +642,7 @@ app.delete( '/user/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'DELETE /user/' + id );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -681,7 +688,7 @@ app.delete( '/attachment/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;
   console.log( 'DELETE /attachment/' + id );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -722,7 +729,7 @@ app.post( '/titleDesc', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /setTitleDesc' );
   //console.log( req.body );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -785,7 +792,7 @@ app.post( '/titleDesc', function( req, res ){
 app.get( '/searchDocuments', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchDocuments' );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -829,7 +836,7 @@ app.get( '/searchDocuments', function( req, res ){
 app.get( '/searchUsers', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchUsers' );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -873,7 +880,7 @@ app.get( '/searchUsers', function( req, res ){
 app.get( '/searchAttachments', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'GET /searchAttachments' );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -918,7 +925,7 @@ app.get( '/searchAttachments', function( req, res ){
 app.post( '/reset', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /reset' );
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
     res.status( 401 );
     res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
@@ -986,7 +993,7 @@ function validateDocType( doc ){
   var b = false;
   console.log( "validating document: " + doc._id );
   if( doc && doc.type ){
-    switch( type ){
+    switch( doc.type ){
     case 'document':
       if( doc.title && doc.body && doc.user && doc.timestamp ){
         b = true;

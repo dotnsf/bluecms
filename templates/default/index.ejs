@@ -7,7 +7,7 @@ $(function(){
   if( user != null ){
 %>
     //. ログインしている
-    $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> ' + user.name + '(Logout)</a></li>' );
+    $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
 <%
   }else{
 %>

@@ -155,20 +155,29 @@ function updateUser(){
   var name = $('#user_name').val();
   var email = $('#user_email').val();
   var role = $('#user_role').val();
-  console.log( 'updateUser(): id=' + id + ', name=' + name + ', role=' + role );
 
   $.ajax({
     type: 'POST',
     url: '/user',
-    data: { _id: id, password: password, name: name, email: email, role: role },
+    data: { _id: id, type: 'user', password: password, name: name, email: email, role: role },
     success: function( data ){
       console.log( data );
       getUsers();
     },
-    error: function(){
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
       console.log( 'updateUser: error' );
     }
   });
+}
+
+function editUser(user){
+  $('#user_id').val( user._id );
+  $('#user_password').val( user.password );
+  $('#user_name').val( user.name );
+  $('#user_email').val( user.email );
+  $('#user_role').val( user.role );
 }
 
 function deleteUser(id){
@@ -182,7 +191,10 @@ function deleteUser(id){
       success: function( data ){
         window.location.href = '/';
       },
-      error: function(){
+      error: function( jqXHR, textStatus, errorThrown ){
+        console.log( textStatus );
+        console.log( errorThrown );
+        console.log( 'updateUser: error' );
         window.location.href = '/';
       }
     });
@@ -213,7 +225,7 @@ function deleteUser(id){
 <%
 if( user.role == 0 ){
 %>
-<div class="container-fluid" style="padding:20px 0; font-size:8px;">
+<div class="container" style="padding:20px 0; font-size:8px;">
   <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
       <tr>
@@ -234,7 +246,7 @@ if( user.role == 0 ){
 }
 %>
 
-<div class="container-fluid" style="padding:20px 0; font-size:8px;">
+<div class="container" style="padding:20px 0; font-size:8px;">
   <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
       <tr>
@@ -251,7 +263,7 @@ if( user.role == 0 ){
   </table>
 </div>
 
-<div class="container-fluid" style="padding:20px 0; font-size:8px;">
+<div class="container" style="padding:20px 0; font-size:8px;">
   <table class="table table-hover table-bordered" id="documents_table">
     <thead class="table-inverse">
       <tr>
