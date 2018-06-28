@@ -25,7 +25,7 @@ function getUsers(){
     url: '/docs?type=user',
     success: function( result ){
       obj.remove();
-console.log( result );
+      //console.log( result );
       if( result.status ){
         $('#users_table_tbody').append( tr );
         var users = result.docs;
@@ -38,9 +38,10 @@ console.log( result );
             + '<td>' + user.name + '</td>'
             + '<td>' + user.email + '</td>'
             + '<td>' + user.role + '</td>'
+            + '<td>' + timestamp2datetime( user.timestamp ) + '</td>'
             + '<td>'
             + "<input type='button' value='<%= __('users.buttonlabel.edit') %>' class='btn btn-success' onClick='editUser(" + JSON.stringify(user) + ")'>"
-            + "<input type='button' value='<%= __('users.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteUser(\"" + user.id + "\")'/>"
+            + "<input type='button' value='<%= __('users.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteUser(\"" + user._id + "\")'/>"
             + '</td>'
             + '</tr>';
           $('#users_table_tbody').append( tr );
@@ -52,6 +53,7 @@ console.log( result );
           + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
           + "<td><input type='text' id='user_email' placeholder='<%= __('users.placeholder.email' ) %>'/></td>"
           + "<td><input type='text' id='user_role' placeholder='<%= __('users.placeholder.role' ) %>'/></td>"
+          + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('users.buttonlabel.update') %>' onClick='updateUser();'/></td>"
           + "</tr>";
         $('#users_table_tbody').append( tr );
@@ -71,7 +73,7 @@ function getDocuments(){
     type: 'GET',
     url: '/docs?type=document',
     success: function( result ){
-console.log( result );
+      //console.log( result );
       obj.remove();
       if( result.status ){
         var documents = result.docs;
@@ -82,12 +84,27 @@ console.log( result );
             + '<td>' + doc._id + '</td>'
             + '<td>' + doc.title + '</td>'
             + '<td>' + doc.body + '</td>'
+            + '<td>' + doc.status + '</td>'
             + '<td>' + doc.user.name + '</td>'
-            + '<td>' + doc.timestamp + '</td>'
-            + '<td></td>'
+            + '<td>' + timestamp2datetime( doc.timestamp ) + '</td>'
+            + '<td>'
+            + "<input type='button' value='<%= __('documents.buttonlabel.edit') %>' class='btn btn-success' onClick='editDocument(" + JSON.stringify(doc) + ")'>"
+            + "<input type='button' value='<%= __('documents.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteDocument(\"" + doc._id + "\")'/>"
+            + '</td>'
             + '</tr>';
           $('#documents_table_tbody').append( tr );
         });
+        var tr = "<tr>"
+          + '<td>-</td>'
+          + "<td><input type='text' id='document_id' placeholder='<%= __('documents.placeholder.id' ) %>'/></td>"
+          + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
+          + "<td><input type='text' id='document_body' placeholder='<%= __('documents.placeholder.body' ) %>'/></td>"
+          + "<td><input type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
+          + "<td><input type='text' id='document_user_name' placeholder='<%= __('documents.placeholder.user.name' ) %>'/></td>"
+          + "<td>-</td>"
+          + "<td><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td>"
+          + "</tr>";
+        $('#documents_table_tbody').append( tr );
       }
     },
     error: function( err ){
@@ -105,7 +122,7 @@ function getAttachments(){
     url: '/docs?type=attachment',
     success: function( result ){
       obj.remove();
-console.log( result );
+      //console.log( result );
       if( result.status ){
         var attachments = result.docs;
         var cnt = 1;
@@ -115,12 +132,26 @@ console.log( result );
             + '<td>' + attachment.filename + '</td>'
             + '<td>' + attachment.name + '</td>'
             + '<td>' + attachment.user.name + '</td>'
-            + '<td>' + attachment.timestamp + '</td>'
+            + '<td>' + timestamp2datetime( attachment.timestamp ) + '</td>'
             + '<td>' + attachment._id + '</td>'
-            + '<td></td>'
+            + '<td>'
+            //+ "<input type='button' value='<%= __('attachments.buttonlabel.edit') %>' class='btn btn-success' onClick='editAttachment(" + JSON.stringify(attachment) + ")'>"
+            + "<input type='button' value='<%= __('attachments.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteAttachment(\"" + attachment._id + "\")'/>"
+            + '</td>'
             + '</tr>';
           $('#attachments_table_tbody').append( tr );
         });
+        var tr = "<tr>"
+          + '<td>-</td>'
+          + "<td><input type='text' id='attachment_filename' placeholder='<%= __('attachments.placeholder.filename' ) %>'/></td>"
+          + "<td><input type='text' id='attachment_name' placeholder='<%= __('attachments.placeholder.name' ) %>'/></td>"
+          + "<td><input type='text' id='attachment_user_name' placeholder='<%= __('attachments.placeholder.user_name' ) %>'/></td>"
+          + "<td><input type='text' id='attachment_timestamp' placeholder='<%= __('attachments.placeholder.timestamp' ) %>'/></td>"
+          + "<td><input type='text' id='attachment_id' placeholder='<%= __('attachments.placeholder.id' ) %>'/></td>"
+          + "<td>-</td>"
+          + "<td><input type='button' class='btn btn-primary' value='<%= __('attachments.buttonlabel.update') %>' onClick='updateAttachment();'/></td>"
+          + "</tr>";
+        $('#attachments_table_tbody').append( tr );
       }
     },
     error: function( err ){
@@ -201,6 +232,117 @@ function deleteUser(id){
   }
 }
 
+function updateDocument(){
+  var id = $('#document_id').val();
+  var title = $('#document_title').val();
+  var body = $('#document_body').val();
+  var status = $('#document_status').val();
+
+  $.ajax({
+    type: 'POST',
+    url: '/document',
+    data: { _id: id, type: 'document', title: title, body: body, status: status },
+    success: function( data ){
+      console.log( data );
+      getUsers();
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
+      console.log( 'updateDocument: error' );
+    }
+  });
+}
+
+function editDocument(doc){
+  $('#document_id').val( doc._id );
+  $('#document_title').val( doc.title );
+  $('#document_body').val( doc.body );
+  $('#document_status').val( doc.status );
+}
+
+function deleteDocument(id){
+  if( window.confirm( 'Delete Document?' ) ){
+    console.log( 'deleteDocument(): id=' + id );
+
+    $.ajax({
+      type: 'DELETE',
+      url: '/document/' + id,
+      data: {},
+      success: function( data ){
+        window.location.href = '/';
+      },
+      error: function( jqXHR, textStatus, errorThrown ){
+        console.log( textStatus );
+        console.log( errorThrown );
+        console.log( 'updateDocument: error' );
+        window.location.href = '/';
+      }
+    });
+  }
+}
+
+function updateAttachment(){
+  var id = $('#attachment_id').val();
+  var filename = $('#attachment_filename').val();
+  var name = $('#attachment_name').val();
+
+  $.ajax({
+    type: 'POST',
+    url: '/attachment',
+    data: { _id: id, type: 'attachment', filename: filename, name: name },
+    success: function( data ){
+      console.log( data );
+      getUsers();
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
+      console.log( 'updateAttachment: error' );
+    }
+  });
+}
+
+function editAttachment(attachment){
+  $('#attachment_filename').val( attachment.filename );
+  $('#attachment_name').val( attachment.name );
+  $('#attachment_id').val( attachment._id );
+}
+
+function deleteAttachment(id){
+  if( window.confirm( 'Delete Attachment?' ) ){
+    console.log( 'deleteAttachment(): id=' + id );
+
+    $.ajax({
+      type: 'DELETE',
+      url: '/attachment/' + id,
+      data: {},
+      success: function( data ){
+        window.location.href = '/';
+      },
+      error: function( jqXHR, textStatus, errorThrown ){
+        console.log( textStatus );
+        console.log( errorThrown );
+        console.log( 'updateAttachment: error' );
+        window.location.href = '/';
+      }
+    });
+  }
+}
+
+function timestamp2datetime( ts ){
+  var dt = new Date( ts );
+  var yyyy = dt.getFullYear();
+  var mm = dt.getMonth() + 1;
+  var dd = dt.getDate();
+  var hh = dt.getHours();
+  var nn = dt.getMinutes();
+  var ss = dt.getSeconds();
+  var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+    + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+  return datetime;
+}
+
 </script>
 </head>
 <body>
@@ -235,6 +377,7 @@ if( user.role == 0 ){
       <th><%= __('admin.body.users.table.thead.name') %></th>
       <th><%= __('admin.body.users.table.thead.email') %></th>
       <th><%= __('admin.body.users.table.thead.role') %></th>
+      <th><%= __('admin.body.users.table.thead.timestamp') %></th>
       <th><%= __('admin.body.users.table.thead.actions') %></th>
       </tr>
     </thead>
@@ -251,8 +394,10 @@ if( user.role == 0 ){
     <thead class="table-inverse">
       <tr>
       <th>#</th>
+      <th><%= __('admin.body.documents.table.thead.id') %></th>
       <th><%= __('admin.body.documents.table.thead.title') %></th>
       <th><%= __('admin.body.documents.table.thead.body') %></th>
+      <th><%= __('admin.body.documents.table.thead.status') %></th>
       <th><%= __('admin.body.documents.table.thead.user.name') %></th>
       <th><%= __('admin.body.documents.table.thead.timestamp') %></th>
       <th><%= __('admin.body.documents.table.thead.actions') %></th>
@@ -264,7 +409,7 @@ if( user.role == 0 ){
 </div>
 
 <div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="documents_table">
+  <table class="table table-hover table-bordered" id="attachments_table">
     <thead class="table-inverse">
       <tr>
       <th>#</th>

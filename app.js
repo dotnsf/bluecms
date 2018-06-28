@@ -202,7 +202,8 @@ app.post( '/adminuser', function( req, res ){
             password: password,
             name: name,
             role: 0,
-            email: email
+            email: email,
+            timestamp: ( new Date() ).getTime()
           };
           db.insert( user, function( err, body ){
             if( err ){
@@ -433,7 +434,7 @@ app.post( '/document', function( req, res ){
             doc.user = user;
             doc.timestamp = ( new Date() ).getTime();
             if( validateDocType( doc ) ){
-              db.insert( doc, function( err, body ){ //. insert
+              db.insert( doc, function( err, body ){ //. insert/update
                 if( err ){
                   res.status( 400 );
                   res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
@@ -483,6 +484,7 @@ app.post( '/user', function( req, res ){
             res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
             res.end();
           }else{
+            doc.timestamp = ( new Date() ).getTime();
             if( validateDocType( doc ) ){
               generateHash( doc.password ).then( function( value ){
                 doc.password = value;
@@ -1000,12 +1002,12 @@ function validateDocType( doc ){
       }
       break;
     case 'user':
-      if( doc._id && doc.password && doc.name && doc.email && ( "role" in doc ) ){
+      if( doc._id && doc.password && doc.name && doc.timestamp && doc.email && ( "role" in doc ) ){
         b = true;
       }
       break;
     case 'attachment':
-      if( doc.filename && doc.user && doc._attachment ){
+      if( doc.filename && doc.user && doc._attachment && doc.timestamp ){
         b = true;
       }
       break;
@@ -1029,8 +1031,8 @@ function createDesignDocuments(){
     _id: "_design/documents",
     language: "javascript",
     views: {
-      by_id: {
-        map: "function (doc) { if( doc.type && doc.type == 'document' ){ emit(doc._id, doc); } }"
+      bytimestamp: {
+        map: "function (doc) { if( doc.typestamp && doc.type && doc.type == 'document' ){ emit(doc.timestamp, doc); } }"
       }
     },
     indexes: {
@@ -1054,8 +1056,8 @@ function createDesignDocuments(){
     _id: "_design/users",
     language: "javascript",
     views: {
-      by_id: {
-        map: "function (doc) { if( doc.type && doc.type == 'user' ){ emit(doc._id, doc); } }"
+      bytimestamp: {
+        map: "function (doc) { if( doc.typestamp && doc.type && doc.type == 'user' ){ emit(doc.timestamp, doc); } }"
       }
     },
     indexes: {
@@ -1079,8 +1081,8 @@ function createDesignDocuments(){
     _id: "_design/attachments",
     language: "javascript",
     views: {
-      by_id: {
-        map: "function (doc) { if( doc.type && doc.type == 'attachment' ){ emit(doc._id, doc); } }"
+      bytimestamp: {
+        map: "function (doc) { if( doc.typestamp && doc.type && doc.type == 'attachment' ){ emit(doc.timestamp, doc); } }"
       }
     },
     indexes: {
