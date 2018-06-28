@@ -5,9 +5,12 @@ var Cloudantlib = require( '@cloudant/cloudant' );
 var express = require( 'express' );
 var bodyParser = require( 'body-parser' );
 var crypto = require( 'crypto' );
+var fs = require( 'fs' );
 var i18n = require( 'i18n' );
 var jwt = require( 'jsonwebtoken' );
+var multer = require( 'multer' );
 var session = require( 'express-session' );
+var uuidv1 = require( 'uuid/v1' );
 var app = express();
 
 var settings = require( './settings' );
@@ -62,6 +65,7 @@ if( settings.db_username && settings.db_password ){
 app.set( 'superSecret', settings.superSecret );
 app.use( express.static( __dirname + '/public' ) );
 //app.use( bodyParser.urlencoded( { extended: true, limit: '10mb' } ) );
+app.use( multer( { dest: './tmp/' } ).single( 'attachment_file' ) );
 app.use( bodyParser.urlencoded() );
 app.use( bodyParser.json() );
 
@@ -426,6 +430,10 @@ app.post( '/document', function( req, res ){
       }else{
         if( db ){
           var doc = req.body;
+          if( doc.status && typeof doc.status == 'string' ){
+            doc.status = parseInt( doc.status );
+          }
+          if( !doc._id ){ doc._id = uuidv1(); }
           if( doc.user && doc.user._id != user._id && user.role > 0 ){
             res.status( 400 );
             res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
@@ -436,6 +444,7 @@ app.post( '/document', function( req, res ){
             if( validateDocType( doc ) ){
               db.insert( doc, function( err, body ){ //. insert/update
                 if( err ){
+                  //console.log( err ); //. Error: Document id must not be empty
                   res.status( 400 );
                   res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
                   res.end();
@@ -542,6 +551,7 @@ app.post( '/attachment', function( req, res ){
           var bin = fs.readFileSync( filepath );
           var bin64 = new Buffer( bin ).toString( 'base64' );
           var doc = {
+            _id: uuidv1(),
             type: 'attachment',
             filename: filename,
             timestamp: ( new Date() ).getTime(),

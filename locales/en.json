@@ -49,5 +49,7 @@
 	"attachments.placeholder.timestamp": "timestamp",
 	"attachments.placeholder.id": "id",
 	"attachments.buttonlabel.update": "update",
-	"admin.body.documents.table.thead.id": "id"
+	"admin.body.documents.table.thead.id": "id",
+	"admin.body.attachments.table.thead.file": "file",
+	"admin.body.attachments.table.thead.id": "admin.body.attachments.table.thead.id"
 }

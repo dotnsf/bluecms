@@ -15,6 +15,7 @@ if( user.role == 0 ){
 %>
   getDocuments();
   getAttachments();
+
 });
 
 function getUsers(){
@@ -47,7 +48,7 @@ function getUsers(){
           $('#users_table_tbody').append( tr );
         });
         var tr = "<tr>"
-          + '<td>-</td>'
+          + "<td>-<input type='hidden' id='user_rev' value=''/></td>"
           + "<td><input type='text' id='user_id' placeholder='<%= __('users.placeholder.id' ) %>'/></td>"
           + "<td><input type='password' id='user_password' placeholder='<%= __('users.placeholder.password' ) %>'/></td>"
           + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
@@ -81,7 +82,6 @@ function getDocuments(){
         documents.forEach( function( doc ){
           var tr = '<tr>'
             + '<td>' + ( cnt ++ ) + '</td>'
-            + '<td>' + doc._id + '</td>'
             + '<td>' + doc.title + '</td>'
             + '<td>' + doc.body + '</td>'
             + '<td>' + doc.status + '</td>'
@@ -95,12 +95,11 @@ function getDocuments(){
           $('#documents_table_tbody').append( tr );
         });
         var tr = "<tr>"
-          + '<td>-</td>'
-          + "<td><input type='text' id='document_id' placeholder='<%= __('documents.placeholder.id' ) %>'/></td>"
+          + "<td>-<input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/></td>"
           + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
           + "<td><input type='text' id='document_body' placeholder='<%= __('documents.placeholder.body' ) %>'/></td>"
           + "<td><input type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
-          + "<td><input type='text' id='document_user_name' placeholder='<%= __('documents.placeholder.user.name' ) %>'/></td>"
+          + "<td>-</td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td>"
           + "</tr>";
@@ -129,11 +128,11 @@ function getAttachments(){
         attachments.forEach( function( attachment ){
           var tr = '<tr>'
             + '<td>' + ( cnt ++ ) + '</td>'
+            + '<td><a target="_blank" href="/attachment/' + attachment._id + '">' + attachment._id + '</a></td>'
             + '<td>' + attachment.filename + '</td>'
             + '<td>' + attachment.name + '</td>'
             + '<td>' + attachment.user.name + '</td>'
             + '<td>' + timestamp2datetime( attachment.timestamp ) + '</td>'
-            + '<td>' + attachment._id + '</td>'
             + '<td>'
             //+ "<input type='button' value='<%= __('attachments.buttonlabel.edit') %>' class='btn btn-success' onClick='editAttachment(" + JSON.stringify(attachment) + ")'>"
             + "<input type='button' value='<%= __('attachments.buttonlabel.delete') %>' class='btn btn-warning' onClick='deleteAttachment(\"" + attachment._id + "\")'/>"
@@ -142,16 +141,17 @@ function getAttachments(){
           $('#attachments_table_tbody').append( tr );
         });
         var tr = "<tr>"
-          + '<td>-</td>'
-          + "<td><input type='text' id='attachment_filename' placeholder='<%= __('attachments.placeholder.filename' ) %>'/></td>"
+          + "<td>-<input type='hidden' id='attachment_id' value=''/><input type='hidden' id='attachment_rev' value=''/></td>"
+          + "<td><form id='form1'><input type='file' id='attachment_file' name='attachment_file'/></form></td>"
+          + "<td><input type='text' id='attachment_filename' placeholder='<%= __('attachments.placeholder.filename' ) %>' readonly/></td>"
           + "<td><input type='text' id='attachment_name' placeholder='<%= __('attachments.placeholder.name' ) %>'/></td>"
-          + "<td><input type='text' id='attachment_user_name' placeholder='<%= __('attachments.placeholder.user_name' ) %>'/></td>"
-          + "<td><input type='text' id='attachment_timestamp' placeholder='<%= __('attachments.placeholder.timestamp' ) %>'/></td>"
-          + "<td><input type='text' id='attachment_id' placeholder='<%= __('attachments.placeholder.id' ) %>'/></td>"
+          + "<td>-</td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('attachments.buttonlabel.update') %>' onClick='updateAttachment();'/></td>"
           + "</tr>";
         $('#attachments_table_tbody').append( tr );
+
+        document.getElementById( 'attachment_file' ).addEventListener( 'change', handleFileSelect, false );
       }
     },
     error: function( err ){
@@ -182,15 +182,18 @@ function logout(){
 
 function updateUser(){
   var id = $('#user_id').val();
+  var rev = $('#user_rev').val();
   var password = $('#user_password').val();
   var name = $('#user_name').val();
   var email = $('#user_email').val();
   var role = $('#user_role').val();
+  var data = { _id: id, type: 'user', password: password, name: name, email: email, role: role };
+  if( rev ){ data['_rev'] = rev; }
 
   $.ajax({
     type: 'POST',
     url: '/user',
-    data: { _id: id, type: 'user', password: password, name: name, email: email, role: role },
+    data: data,
     success: function( data ){
       console.log( data );
       getUsers();
@@ -205,6 +208,7 @@ function updateUser(){
 
 function editUser(user){
   $('#user_id').val( user._id );
+  $('#user_rev').val( user._rev );
   $('#user_password').val( user.password );
   $('#user_name').val( user.name );
   $('#user_email').val( user.email );
@@ -220,13 +224,13 @@ function deleteUser(id){
       url: '/user/' + id,
       data: {},
       success: function( data ){
-        window.location.href = '/';
+        getUsers();
       },
       error: function( jqXHR, textStatus, errorThrown ){
         console.log( textStatus );
         console.log( errorThrown );
         console.log( 'updateUser: error' );
-        window.location.href = '/';
+        getUsers();
       }
     });
   }
@@ -234,17 +238,20 @@ function deleteUser(id){
 
 function updateDocument(){
   var id = $('#document_id').val();
+  var rev = $('#document_rev').val();
   var title = $('#document_title').val();
   var body = $('#document_body').val();
   var status = $('#document_status').val();
+  var data = { _id: id, type: 'document', title: title, body: body, status: status };
+  if( rev ){ data['_rev'] = rev; }
 
   $.ajax({
     type: 'POST',
     url: '/document',
-    data: { _id: id, type: 'document', title: title, body: body, status: status },
+    data: data,
     success: function( data ){
       console.log( data );
-      getUsers();
+      getDocuments();
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus );
@@ -256,9 +263,11 @@ function updateDocument(){
 
 function editDocument(doc){
   $('#document_id').val( doc._id );
+  $('#document_rev').val( doc._rev );
   $('#document_title').val( doc.title );
   $('#document_body').val( doc.body );
   $('#document_status').val( doc.status );
+  $('#document_user_name').val( doc.user.name );
 }
 
 function deleteDocument(id){
@@ -270,30 +279,43 @@ function deleteDocument(id){
       url: '/document/' + id,
       data: {},
       success: function( data ){
-        window.location.href = '/';
+        getDocuments();
       },
       error: function( jqXHR, textStatus, errorThrown ){
         console.log( textStatus );
         console.log( errorThrown );
         console.log( 'updateDocument: error' );
-        window.location.href = '/';
+        getDocuments();
       }
     });
   }
 }
 
 function updateAttachment(){
+  var form = $('#form1').get()[0];
+  var data = new FormData( form );
+
   var id = $('#attachment_id').val();
+  var rev = $('#attachment_rev').val();
   var filename = $('#attachment_filename').val();
   var name = $('#attachment_name').val();
+  //var data = { _id: id, type: 'attachment', filename: filename, name: name };
+  data['_id'] = id;
+  data['type'] = 'attachment';
+  data['filename'] = filename;
+  data['name'] = name;
+  if( rev ){ data['_rev'] = rev; }
 
   $.ajax({
     type: 'POST',
     url: '/attachment',
-    data: { _id: id, type: 'attachment', filename: filename, name: name },
+    data: data,
+    processData: false,
+    contentType: false,
+    dataType: 'json',
     success: function( data ){
       console.log( data );
-      getUsers();
+      getAttachments();
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus );
@@ -304,9 +326,11 @@ function updateAttachment(){
 }
 
 function editAttachment(attachment){
+  $('#attachment_id').val( attachment._id );
+  $('#attachment_rev').val( attachment._rev );
   $('#attachment_filename').val( attachment.filename );
   $('#attachment_name').val( attachment.name );
-  $('#attachment_id').val( attachment._id );
+  $('#attachment_user_name').val( attachment.user.name );
 }
 
 function deleteAttachment(id){
@@ -318,13 +342,13 @@ function deleteAttachment(id){
       url: '/attachment/' + id,
       data: {},
       success: function( data ){
-        window.location.href = '/';
+        getAttachments();
       },
       error: function( jqXHR, textStatus, errorThrown ){
         console.log( textStatus );
         console.log( errorThrown );
         console.log( 'updateAttachment: error' );
-        window.location.href = '/';
+        getAttachments();
       }
     });
   }
@@ -343,6 +367,16 @@ function timestamp2datetime( ts ){
   return datetime;
 }
 
+function handleFileSelect( evt ){
+  $('#attachment_filename').val( '' );
+  var files = evt.target.files;
+  for( var i = 0; i < files.length; i ++ ){
+    var file = files[i];
+    //console.log( 'i = ' + i );
+    //console.log( file );
+    $('#attachment_filename').val( file.name );
+  }
+}
 </script>
 </head>
 <body>
@@ -368,7 +402,7 @@ function timestamp2datetime( ts ){
 if( user.role == 0 ){
 %>
 <div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="documents_table">
+  <table class="table table-hover table-bordered" id="users_table">
     <thead class="table-inverse">
       <tr>
       <th>#</th>
@@ -394,7 +428,6 @@ if( user.role == 0 ){
     <thead class="table-inverse">
       <tr>
       <th>#</th>
-      <th><%= __('admin.body.documents.table.thead.id') %></th>
       <th><%= __('admin.body.documents.table.thead.title') %></th>
       <th><%= __('admin.body.documents.table.thead.body') %></th>
       <th><%= __('admin.body.documents.table.thead.status') %></th>
@@ -413,6 +446,7 @@ if( user.role == 0 ){
     <thead class="table-inverse">
       <tr>
       <th>#</th>
+      <th><%= __('admin.body.attachments.table.thead.file') %></th>
       <th><%= __('admin.body.attachments.table.thead.filename') %></th>
       <th><%= __('admin.body.attachments.table.thead.name') %></th>
       <th><%= __('admin.body.attachments.table.thead.user.name') %></th>
