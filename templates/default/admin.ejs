@@ -4,7 +4,7 @@
 <script>
 $(function(){
   //. ログインしている
-  $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
+  $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
 
 <%
 if( user.role == 0 ){
@@ -429,22 +429,15 @@ function handleFileSelect( evt ){
 </head>
 <body>
 
-<div class="navbar navbar-default">
-  <div class="container">
-    <div class="navbar-header">
-      <a href="/" class="navbar-brand" id="navbar_title"><%= title %></a>
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-    </div>
-    <div class="collapse navbar-collapse target">
-      <ul class="nav navbar-nav navbar-right" id="navbar">
-      </ul>
-    </div>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a href="/" class="navbar-brand" id="navbar_title"><%= title %></a>
+  <div class="collapse navbar-collapse target">
+    <ul class="navbar-nav mr-auto">
+    </ul>
+    <ul class="navbar-nav" id="navbar">
+    </ul>
   </div>
-</div>
+</nav>
 
 <%
 if( user.role == 0 ){

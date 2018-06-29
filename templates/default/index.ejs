@@ -7,12 +7,12 @@ $(function(){
   if( user != null ){
 %>
     //. ログインしている
-    $('#navbar').html( '<li><a href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
+    $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
 <%
   }else{
 %>
     //. ログインしていない
-    $('#navbar').html( '<li><a href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>' );
+    $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>' );
 <%
   }
 %>
@@ -20,15 +20,28 @@ $(function(){
 });
 
 function getDocuments(){
-  $('#documents_table_tbody').html( '' );
+  $('#documents_tile').html( '' );
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/docs?type=documents',
+    url: '/docs?type=document',
     success: function( result ){
       obj.remove();
+      console.log( result );
       if( result.status ){
         var documents = result.docs;
+        documents.forEach( function( doc ){
+          if( doc.status > 0 ){
+            var div = '<div class="card">'
+              + '<div class="card-header">' + doc.title + '</div>'
+              + '<div class="card-body">'
+              + '<p class="card-text">' + doc.body.substr( 0, 80 ) + '..</p>'
+              + '<p class="card-text">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
+              + '</div>'
+              + '</div>';
+            $('#documents_tile').append( div );
+          }
+        });
       }
     },
     error: function( err ){
@@ -60,39 +73,39 @@ function logout(){
 function login(){
   window.location.href = '/login';
 }
+
+function timestamp2datetime( ts ){
+  var dt = new Date( ts );
+  var yyyy = dt.getFullYear();
+  var mm = dt.getMonth() + 1;
+  var dd = dt.getDate();
+  var hh = dt.getHours();
+  var nn = dt.getMinutes();
+  var ss = dt.getSeconds();
+  var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+    + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+  return datetime;
+}
 </script>
 </head>
 <body>
 
-<div class="navbar navbar-default">
-  <div class="container">
-    <div class="navbar-header">
-      <a href="/" class="navbar-brand"><%= title %></a>
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-    </div>
-    <div class="collapse navbar-collapse target">
-      <ul class="nav navbar-nav navbar-right" id="navbar">
-      </ul>
-    </div>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a href="/" class="navbar-brand"><%= title %></a>
+  <div class="collapse navbar-collapse target">
+    <ul class="navbar-nav mr-auto">
+    </ul>
+    <ul class="navbar-nav" id="navbar">
+    </ul>
   </div>
-</div>
+</nav>
 
 <div class="jumbotron">
   <h1><%= title %></h1>
   <p><%= desc %></p>
 </div>
 
-<div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="documents_table">
-    <thead class="table-inverse">
-    </thead>
-    <tbody id="documents_table_tbody">
-    </tbody>
-  </table>
+<div class="container" id="documents_tile" style="padding:20px 0; font-size:8px;">
 </div>
 
 <%- include('./footer', {}) %>
