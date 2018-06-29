@@ -51,5 +51,9 @@
 	"attachments.buttonlabel.update": "update",
 	"admin.body.documents.table.thead.id": "id",
 	"admin.body.attachments.table.thead.file": "file",
-	"admin.body.attachments.table.thead.id": "admin.body.attachments.table.thead.id"
+	"admin.body.titleDesc.table.tbody.title": "title",
+	"titleDesc.placeholder.tilte": "tilte",
+	"titleDesc.buttonlabel.update": "update",
+	"admin.body.titleDesc.table.tbody.desc": "description",
+	"titleDesc.placeholder.desc": "description"
 }

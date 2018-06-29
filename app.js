@@ -375,7 +375,6 @@ app.get( '/titleDesc', function( req, res ){
           desc: ''
         };
       }
-console.log( doc );
       res.write( JSON.stringify( { status: true, doc: doc }, 2, null ) );
       res.end();
     });
@@ -545,7 +544,7 @@ app.post( '/attachment', function( req, res ){
         var filetype = req.file.mimetype;
         var filename = req.file.originalname;
         var ext = filetype.split( "/" )[1];
-        var name = req.body.name;
+        var name = req.body.name; //. undefined
 
         if( filename && filepath ){
           var bin = fs.readFileSync( filepath );
@@ -568,11 +567,13 @@ app.post( '/attachment', function( req, res ){
           if( validateDocType( doc ) ){
             db.insert( doc, function( err, body ){ //. insert only
               if( err ){
+                console.log( err );
                 fs.unlink( filepath, function( err ){} );
                 res.status( 400 );
                 res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
                 res.end();
               }else{
+                console.log( body );
                 fs.unlink( filepath, function( err ){} );
                 res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
                 res.end();
@@ -739,7 +740,7 @@ app.delete( '/attachment/:id', function( req, res ){
 
 app.post( '/titleDesc', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
-  console.log( 'POST /setTitleDesc' );
+  console.log( 'POST /titleDesc' );
   //console.log( req.body );
   var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
@@ -1017,7 +1018,7 @@ function validateDocType( doc ){
       }
       break;
     case 'attachment':
-      if( doc.filename && doc.user && doc._attachment && doc.timestamp ){
+      if( doc.filename && doc.user && doc._attachments && doc.timestamp ){
         b = true;
       }
       break;

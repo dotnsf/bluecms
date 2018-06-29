@@ -13,10 +13,35 @@ if( user.role == 0 ){
 <%
 }
 %>
+
+  getTitleDesc();
   getDocuments();
   getAttachments();
 
 });
+
+function getTitleDesc(){
+  var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
+  $.ajax({
+    type: 'GET',
+    url: '/titleDesc',
+    success: function( result ){
+      obj.remove();
+      console.log( result );
+      if( result.doc ){
+        $('#navbar_title').val( result.doc.title );
+        $('#titleDesc_id').val( result.doc._id );
+        $('#titleDesc_rev').val( result.doc._rev );
+        $('#titleDesc_title').val( result.doc.title );
+        $('#titleDesc_desc').val( result.doc.desc );
+      }
+    },
+    error: function( err ){
+      obj.remove();
+      console.log( err );
+    }
+  });
+}
 
 function getUsers(){
   $('#users_table_tbody').html( '' );
@@ -142,7 +167,7 @@ function getAttachments(){
         });
         var tr = "<tr>"
           + "<td>-<input type='hidden' id='attachment_id' value=''/><input type='hidden' id='attachment_rev' value=''/></td>"
-          + "<td><form id='form1'><input type='file' id='attachment_file' name='attachment_file'/></form></td>"
+          + "<td><form id='form1' enctype='multipart/form-data'><input type='file' id='attachment_file' name='attachment_file'/></form></td>"
           + "<td><input type='text' id='attachment_filename' placeholder='<%= __('attachments.placeholder.filename' ) %>' readonly/></td>"
           + "<td><input type='text' id='attachment_name' placeholder='<%= __('attachments.placeholder.name' ) %>'/></td>"
           + "<td>-</td>"
@@ -178,6 +203,29 @@ function logout(){
       }
     });
   }
+}
+
+function updateTitleDesc(){
+  var id = $('#titleDesc_id').val();
+  var rev = $('#titleDesc_rev').val();
+  var title = $('#titleDesc_title').val();
+  var desc = $('#titleDesc_desc').val();
+  var data = { _id: id, title: title, desc: desc };
+  if( rev ){ data['_rev'] = rev; }
+  $.ajax({
+    type: 'POST',
+    url: '/titleDesc',
+    data: data,
+    success: function( data ){
+      console.log( data );
+      getTitleDesc();
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
+      console.log( 'updateTitleDesc: error' );
+    }
+  });
 }
 
 function updateUser(){
@@ -305,6 +353,7 @@ function updateAttachment(){
   data['filename'] = filename;
   data['name'] = name;
   if( rev ){ data['_rev'] = rev; }
+  //console.log( data );
 
   $.ajax({
     type: 'POST',
@@ -314,7 +363,6 @@ function updateAttachment(){
     contentType: false,
     dataType: 'json',
     success: function( data ){
-      console.log( data );
       getAttachments();
     },
     error: function( jqXHR, textStatus, errorThrown ){
@@ -384,7 +432,7 @@ function handleFileSelect( evt ){
 <div class="navbar navbar-default">
   <div class="container">
     <div class="navbar-header">
-      <a href="/" class="navbar-brand"><%= title %></a>
+      <a href="/" class="navbar-brand" id="navbar_title"><%= title %></a>
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -401,6 +449,24 @@ function handleFileSelect( evt ){
 <%
 if( user.role == 0 ){
 %>
+<div class="container" style="padding:20px 0; font-size:8px;">
+  <table class="table table-hover table-bordered" id="titleDesc_table">
+    <tbody id="titleDesc_table_tbody">
+      <input type="hidden" id="titleDesc_id" value=""/>
+      <input type="hidden" id="titleDesc_rev" value=""/>
+      <tr>
+        <td><%= __('admin.body.titleDesc.table.tbody.title') %></td>
+        <td><input type="text" id="titleDesc_title" placeholder="<%= __('titleDesc.placeholder.tilte') %>" value=""/></td>
+        <td rowspan='2'><input type="button" class="btn btn-primary" value="<%= __('titleDesc.buttonlabel.update') %>" onClick="updateTitleDesc();"/></td>
+      </tr>
+      <tr>
+        <td><%= __('admin.body.titleDesc.table.tbody.desc') %></td>
+        <td><input type="text" id="titleDesc_desc" placeholder="<%= __('titleDesc.placeholder.desc') %>" value=""/></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <div class="container" style="padding:20px 0; font-size:8px;">
   <table class="table table-hover table-bordered" id="users_table">
     <thead class="table-inverse">
