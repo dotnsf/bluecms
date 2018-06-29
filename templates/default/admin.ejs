@@ -78,7 +78,7 @@ function getUsers(){
           + "<td><input type='password' id='user_password' placeholder='<%= __('users.placeholder.password' ) %>'/></td>"
           + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
           + "<td><input type='text' id='user_email' placeholder='<%= __('users.placeholder.email' ) %>'/></td>"
-          + "<td><input type='text' id='user_role' placeholder='<%= __('users.placeholder.role' ) %>'/></td>"
+          + "<td><input type='text' style='width:100px;' id='user_role' placeholder='<%= __('users.placeholder.role' ) %>'/></td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('users.buttonlabel.update') %>' onClick='updateUser();'/></td>"
           + "</tr>";
@@ -123,7 +123,7 @@ function getDocuments(){
           + "<td>-<input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/></td>"
           + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
           + "<td><input type='text' id='document_body' placeholder='<%= __('documents.placeholder.body' ) %>'/></td>"
-          + "<td><input type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
+          + "<td><input type='text' style='width:100px;' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
           + "<td>-</td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td>"
@@ -449,12 +449,12 @@ if( user.role == 0 ){
       <input type="hidden" id="titleDesc_rev" value=""/>
       <tr>
         <td><%= __('admin.body.titleDesc.table.tbody.title') %></td>
-        <td><input type="text" id="titleDesc_title" placeholder="<%= __('titleDesc.placeholder.tilte') %>" value=""/></td>
+        <td><input type="text" style="width:500px;" id="titleDesc_title" placeholder="<%= __('titleDesc.placeholder.tilte') %>" value=""/></td>
         <td rowspan='2'><input type="button" class="btn btn-primary" value="<%= __('titleDesc.buttonlabel.update') %>" onClick="updateTitleDesc();"/></td>
       </tr>
       <tr>
         <td><%= __('admin.body.titleDesc.table.tbody.desc') %></td>
-        <td><input type="text" id="titleDesc_desc" placeholder="<%= __('titleDesc.placeholder.desc') %>" value=""/></td>
+        <td><input type="text" style="width:500px;" id="titleDesc_desc" placeholder="<%= __('titleDesc.placeholder.desc') %>" value=""/></td>
       </tr>
     </tbody>
   </table>
