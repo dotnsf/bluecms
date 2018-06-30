@@ -229,6 +229,23 @@ app.post( '/adminuser', function( req, res ){
   }
 });
 
+app.get( '/single/:id', function( req, res ){
+  var id = req.params.id;
+  console.log( 'GET /single/' + id );
+
+  if( db ){
+    db.get( id, { include_docs: true }, function( err, doc ){
+      if( err ){
+        res.render( 'single', { title: '', body: err, datetime: '????-??-??', user_name: '?' } );
+      }else{
+        res.render( 'single', { title: doc.title, body: doc.body, datetime: doc.timestamp, user: doc.user } );
+      }
+    });
+  }else{
+    res.render( 'single', { title: '', body: 'db is failed to initialize.', datetime: '????-??-??', user_name: '?' } );
+  }
+});
+
 app.get( '/document/:id', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var id = req.params.id;

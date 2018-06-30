@@ -1,0 +1,34 @@
+<%- include('./header', {}) %>
+
+<title><%= title %></title>
+<script>
+$(function(){
+});
+
+function timestamp2datetime( ts ){
+  var dt = new Date( ts );
+  var yyyy = dt.getFullYear();
+  var mm = dt.getMonth() + 1;
+  var dd = dt.getDate();
+  var hh = dt.getHours();
+  var nn = dt.getMinutes();
+  var ss = dt.getSeconds();
+  var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+    + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+  return datetime;
+}
+</script>
+</head>
+<body>
+
+<div class="container" id="document_tile" style="padding:20px 0; font-size:8px;">
+  <div class="card">
+    <div class="card-header"><%= title %></div>
+    <div class="card-body">
+      <p class="card-text"><%= body %></p>
+      <p class="card-text" style="text-align:right;"><%= datetime %>(<%= user.name %>)</p>
+    </div>
+  </div>
+</div>
+
+<%- include('./footer', {}) %>

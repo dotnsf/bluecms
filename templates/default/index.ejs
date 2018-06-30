@@ -35,13 +35,14 @@ function getDocuments(){
             var div = '<div class="card">'
               + '<div class="card-header">' + doc.title + '</div>'
               + '<div class="card-body">'
-              + '<p class="card-text">' + doc.body.substr( 0, 80 ) + '..</p>'
-              + '<p class="card-text">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
+              + '<p class="card-text"><a class="colorbox" href="single/' + doc._id + '">' + doc.body.substr( 0, 80 ) + '..</a></p>'
+              + '<p class="card-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
               + '</div>'
               + '</div>';
             $('#documents_tile').append( div );
           }
         });
+        $('.colorbox').colorbox();
       }
     },
     error: function( err ){
