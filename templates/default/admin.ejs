@@ -1,4 +1,5 @@
 <%- include('./header', {}) %>
+<script type="text/javascript" src="//js.nicedit.com/nicEdit-latest.js"></script>
 
 <title><%= __('admin.head.admin') %> - <%= title %></title>
 <script>
@@ -122,13 +123,14 @@ function getDocuments(){
         var tr = "<tr>"
           + "<td>-<input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/></td>"
           + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
-          + "<td><input type='text' id='document_body' placeholder='<%= __('documents.placeholder.body' ) %>'/></td>"
+          + "<td><textarea id='document_body' name='document_body'/></textarea></td>"
           + "<td><input type='text' style='width:100px;' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
           + "<td>-</td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td>"
           + "</tr>";
         $('#documents_table_tbody').append( tr );
+        nicEditors.allTextAreas();
       }
     },
     error: function( err ){
@@ -288,7 +290,8 @@ function updateDocument(){
   var id = $('#document_id').val();
   var rev = $('#document_rev').val();
   var title = $('#document_title').val();
-  var body = $('#document_body').val();
+  //var body = $('#document_body').html();
+  var body = nicEditors.findEditor('document_body').getContent();
   var status = $('#document_status').val();
   var data = { _id: id, type: 'document', title: title, body: body, status: status };
   if( rev ){ data['_rev'] = rev; }
@@ -313,9 +316,12 @@ function editDocument(doc){
   $('#document_id').val( doc._id );
   $('#document_rev').val( doc._rev );
   $('#document_title').val( doc.title );
-  $('#document_body').val( doc.body );
+  //$('#document_body').val( doc.body );
+  nicEditors.findEditor('document_body').setContent(doc.body);
   $('#document_status').val( doc.status );
   $('#document_user_name').val( doc.user.name );
+
+  nicEditors.allTextAreas();
 }
 
 function deleteDocument(id){
