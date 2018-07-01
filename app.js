@@ -231,18 +231,19 @@ app.post( '/adminuser', function( req, res ){
 
 app.get( '/single/:id', function( req, res ){
   var id = req.params.id;
-  console.log( 'GET /single/' + id );
+  var noheader = ( req.query.noheader ? 1 : 0 );
+  console.log( 'GET /single/' + id + '?noheader=' + noheader );
 
   if( db ){
     db.get( id, { include_docs: true }, function( err, doc ){
       if( err ){
-        res.render( 'single', { title: '', body: err, datetime: '????-??-??', user_name: '?' } );
+        res.render( 'single', { title: '', body: err, datetime: '????-??-??', user: null, noheader: noheader } );
       }else{
-        res.render( 'single', { title: doc.title, body: doc.body, datetime: doc.timestamp, user: doc.user } );
+        res.render( 'single', { title: doc.title, body: doc.body, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
       }
     });
   }else{
-    res.render( 'single', { title: '', body: 'db is failed to initialize.', datetime: '????-??-??', user_name: '?' } );
+    res.render( 'single', { title: '', body: 'db is failed to initialize.', datetime: '????-??-??', user: null, noheader: noheader } );
   }
 });
 
@@ -1143,6 +1144,19 @@ function generateHash( data ){
       resolve( null );
     }
   });
+}
+
+function timestamp2datetime( ts ){
+  var dt = new Date( ts );
+  var yyyy = dt.getFullYear();
+  var mm = dt.getMonth() + 1;
+  var dd = dt.getDate();
+  var hh = dt.getHours();
+  var nn = dt.getMinutes();
+  var ss = dt.getSeconds();
+  var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+    + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+  return datetime;
 }
 
 
