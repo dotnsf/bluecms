@@ -137,6 +137,11 @@ app.get( '/admin', function( req, res ){
           if( !err ){
             config = doc;
           }
+          if( settings.nlc_username && settings.nlc_password ){
+            config.nlc = true;
+          }else{
+            config.nlc = false;
+          }
           res.render( 'admin', { user: user, config: config, theme: settings.app_theme } );
         });
       }
@@ -247,13 +252,13 @@ app.get( '/single/:id', function( req, res ){
   if( db ){
     db.get( id, { include_docs: true }, function( err, doc ){
       if( err ){
-        res.render( 'single', { title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+        res.render( 'single', { id: id, title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
       }else{
-        res.render( 'single', { title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
+        res.render( 'single', { id: id, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
       }
     });
   }else{
-    res.render( 'single', { title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+    res.render( 'single', { id: id, title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
   }
 });
 
@@ -1026,6 +1031,128 @@ app.post( '/reset', function( req, res ){
   }
 });
 
+app.post( '/trainingNLC', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'POST /trainingNLC' );
+  //console.log( req.body );
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else if( user.role > 0 ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Operation not allowed.' }, 2, null ) );
+        res.end();
+      }else{
+        if( db ){
+          db.list( { include_docs: true }, function( err, body ){
+            if( err ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+              res.end();
+            }else{
+              var docs = [];
+              var training_data = '';
+              var training_metadata = '{"language":"ja","name":"' + settings.nlc_name + '"}';
+              body.rows.forEach( function( doc ){
+                var _doc = JSON.parse(JSON.stringify(doc.doc));
+                if( _doc._id.indexOf( '_' ) !== 0 ){
+                  if( _doc.type && _doc.type == 'document' ){
+                    _doc.body = removeHtmlTag( _doc.body );
+                    //docs.push( _doc );
+                    docs.push( { category: _doc.category, body: _doc.body } );
+                    var line = _doc.body + "," + _doc.category + "¥r¥n";
+                    training_data += line;
+                  }
+                }
+              });
+
+              //. 現在の classifiers 一覧
+              var user_pass = encodeURIComponent( settings.nlc_username + ':' + settings.nlc_password );
+              var options1 = {
+                url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers',
+                method: 'GET',
+                headers: {
+                  'Authorization': 'Basic ' + user_pass
+                }
+              };
+              request( options1, ( err1, res1, body1 ) => {
+                if( err1 ){
+                  res.status( 400 );
+                  res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
+                  res.end();
+                }else{
+                  var classifier_id = null;
+                  if( body1['application/json']['classifiers'] ){
+                    var classifiers = body1['application/json']['classifiers'];
+                    classifiers.forEach( function( classifier ){
+                      if( classifier.name == settings.nlc_name ){
+                        classifier_id = classifier.classifier_id;
+                      }
+                    });
+                  }
+
+                  if( classifier_id ){
+                    //. 既存の classifier が存在していたら削除
+                    var options2 = {
+                      url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers/' + classifier_id,
+                      method: 'DELETE',
+                      headers: {
+                        'Authorization': 'Basic ' + user_pass
+                      }
+                    };
+                    request( options2, ( err2, res2, body2 ) => {
+                      if( err2 ){
+                        res.status( 400 );
+                        res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
+                        res.end();
+                      }else{
+                        var options3 = {
+                          url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers',
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': 'Basic ' + user_pass
+                          },
+                          data: {
+                          }
+                        };
+
+                        //. classifier 作成
+                        res.write( JSON.stringify( { status: true, training_metadata: training_metadata, training_data: training_data }, 2, null ) );
+                        res.end();
+                      }
+                    });
+                  }else{
+                    //. classifier 作成
+                    res.write( JSON.stringify( { status: true, training_metadata: training_metadata, training_data: training_data }, 2, null ) );
+                    res.end();
+                  }
+                }
+              });
+
+              var result = { status: true, docs: docs };
+              res.write( JSON.stringify( result, 2, null ) );
+              res.end();
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
 
 function deleteDoc( doc_id ){
   console.log( "deleting document: " + doc_id );
@@ -1174,6 +1301,12 @@ function timestamp2datetime( ts ){
   var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
     + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
   return datetime;
+}
+
+function removeHtmlTag( html ){
+  var text = html.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g,'');
+  text = text.split(',').join('');
+  return text;
 }
 
 
