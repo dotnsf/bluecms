@@ -29,14 +29,14 @@ function getConfig(){
     success: function( result ){
       obj.remove();
       console.log( result );
-      if( result.doc ){
-        $('#navbar_title').val( result.doc.title );
-        $('#config_id').val( result.doc._id );
-        $('#config_rev').val( result.doc._rev );
-        $('#config_title').val( result.doc.title );
-        $('#config_desc').val( result.doc.desc );
-        $('#config_url').val( result.doc.url );
-        $('#config_image_url').val( result.doc.image_url );
+      if( result.config ){
+        $('#navbar_title').val( result.config.title );
+        $('#config_id').val( result.config._id );
+        $('#config_rev').val( result.config._rev );
+        $('#config_title').val( result.config.title );
+        $('#config_desc').val( result.config.desc );
+        $('#config_url').val( result.config.url );
+        $('#config_image_url').val( result.config.image_url );
       }
     },
     error: function( err ){
@@ -112,6 +112,7 @@ function getDocuments(){
             + '<td>' + ( cnt ++ ) + '</td>'
             + '<td>' + doc.title + '</td>'
             + '<td>' + doc.body + '</td>'
+            + '<td>' + doc.category + '</td>'
             + '<td>' + doc.status + '</td>'
             + '<td>' + doc.user.name + '</td>'
             + '<td>' + timestamp2datetime( doc.timestamp ) + '</td>'
@@ -126,6 +127,7 @@ function getDocuments(){
           + "<td>-<input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/></td>"
           + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
           + "<td><textarea id='document_body' name='document_body'/></textarea></td>"
+          + "<td><input type='text' style='width:100px;' id='document_category' placeholder='<%= __('documents.placeholder.category' ) %>'/></td>"
           + "<td><input type='text' style='width:100px;' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td>"
           + "<td>-</td>"
           + "<td>-</td>"
@@ -296,8 +298,9 @@ function updateDocument(){
   var title = $('#document_title').val();
   //var body = $('#document_body').html();
   var body = nicEditors.findEditor('document_body').getContent();
+  var category = $('#document_category').val();
   var status = $('#document_status').val();
-  var data = { _id: id, type: 'document', title: title, body: body, status: status };
+  var data = { _id: id, type: 'document', title: title, body: body, category: category, status: status };
   if( rev ){ data['_rev'] = rev; }
 
   $.ajax({
@@ -322,6 +325,7 @@ function editDocument(doc){
   $('#document_title').val( doc.title );
   //$('#document_body').val( doc.body );
   nicEditors.findEditor('document_body').setContent(doc.body);
+  $('#document_category').val( doc.category );
   $('#document_status').val( doc.status );
   $('#document_user_name').val( doc.user.name );
 
@@ -410,6 +414,11 @@ function deleteAttachment(id){
       }
     });
   }
+}
+
+function updateNLC(){
+  console.log( 'updateNLC()' );
+
 }
 
 function timestamp2datetime( ts ){
@@ -507,6 +516,7 @@ if( user.role == 0 ){
       <th>#</th>
       <th><%= __('admin.body.documents.table.thead.title') %></th>
       <th><%= __('admin.body.documents.table.thead.body') %></th>
+      <th><%= __('admin.body.documents.table.thead.category') %></th>
       <th><%= __('admin.body.documents.table.thead.status') %></th>
       <th><%= __('admin.body.documents.table.thead.user.name') %></th>
       <th><%= __('admin.body.documents.table.thead.timestamp') %></th>
@@ -516,6 +526,10 @@ if( user.role == 0 ){
     <tbody id="documents_table_tbody">
     </tbody>
   </table>
+</div>
+
+<div class="container" style="padding:0 0; font-size:8px;">
+  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.updatenlc') %>" onClick="updateNLC();"/>
 </div>
 
 <div class="container" style="padding:20px 0; font-size:8px;">

@@ -64,5 +64,8 @@
 	"admin.body.config.table.tbody.image_url": "image_url",
 	"config.placeholder.image_url": "image_url",
 	"admin.body.config.table.tbody.url": "url",
-	"config.placeholder.url": "url"
+	"config.placeholder.url": "url",
+	"documents.placeholder.category": "category",
+	"admin.body.documents.table.thead.category": "category",
+	"documents.buttonlabel.updatenlc": "update NLC"
 }

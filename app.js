@@ -247,13 +247,13 @@ app.get( '/single/:id', function( req, res ){
   if( db ){
     db.get( id, { include_docs: true }, function( err, doc ){
       if( err ){
-        res.render( 'single', { title: '', body: err, datetime: '????-??-??', user: null, noheader: noheader } );
+        res.render( 'single', { title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
       }else{
-        res.render( 'single', { title: doc.title, body: doc.body, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
+        res.render( 'single', { title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
       }
     });
   }else{
-    res.render( 'single', { title: '', body: 'db is failed to initialize.', datetime: '????-??-??', user: null, noheader: noheader } );
+    res.render( 'single', { title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
   }
 });
 
@@ -1043,7 +1043,7 @@ function validateDocType( doc ){
   if( doc && doc.type ){
     switch( doc.type ){
     case 'document':
-      if( doc.title && doc.body && doc.user && doc.timestamp ){
+      if( doc.title && doc.body && doc.user && doc.timestamp /* && doc.category */ ){
         b = true;
       }
       break;
