@@ -1078,7 +1078,7 @@ app.post( '/classify', function( req, res ){
               if( classifier_id ){
                 var params2 = {
                   classifier_id: classifier_id,
-                  text: req.body.text
+                  text: removeHtmlTag( req.body.text )
                 };
                 nlc.classify( params2, ( err2, body2 ) => {
                   if( err2 ){
@@ -1086,7 +1086,7 @@ app.post( '/classify', function( req, res ){
                     res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
                     res.end();
                   }else{
-                    res.write( JSON.stringify( { status: true, message: body2 }, 2, null ) );
+                    res.write( JSON.stringify( { status: true, classes: body2.classes }, 2, null ) );
                     res.end();
                   }
                 });

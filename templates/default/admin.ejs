@@ -417,12 +417,16 @@ function deleteAttachment(id){
 }
 
 function classify(){
+  var text = nicEditors.findEditor('document_body').getContent();
   $.ajax({
     type: 'POST',
-    url: '/classifyNLC',
-    data: {},
+    url: '/classify',
+    data: { text: text },
     success: function( data ){
       console.log( data );
+      if( data.classes && data.classes.length ){
+        $('#document_category').val( data.classes[0].class_name );
+      }
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus );

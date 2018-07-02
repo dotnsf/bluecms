@@ -68,5 +68,6 @@
 	"documents.placeholder.category": "category",
 	"admin.body.documents.table.thead.category": "category",
 	"documents.buttonlabel.updatenlc": "update NLC",
-	"documents.buttonlabel.getnlc": "NLC status"
+	"documents.buttonlabel.getnlc": "NLC status",
+	"documents.buttonlabel.classify": "classify"
 }
