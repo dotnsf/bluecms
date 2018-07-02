@@ -55,5 +55,14 @@
 	"titleDesc.placeholder.tilte": "tilte",
 	"titleDesc.buttonlabel.update": "update",
 	"admin.body.titleDesc.table.tbody.desc": "description",
-	"titleDesc.placeholder.desc": "description"
+	"titleDesc.placeholder.desc": "description",
+	"admin.body.config.table.tbody.title": "title",
+	"config.placeholder.title": "title",
+	"config.buttonlabel.update": "update",
+	"admin.body.config.table.tbody.desc": "desc",
+	"config.placeholder.desc": "desc",
+	"admin.body.config.table.tbody.image_url": "image_url",
+	"config.placeholder.image_url": "image_url",
+	"admin.body.config.table.tbody.url": "url",
+	"config.placeholder.url": "url"
 }

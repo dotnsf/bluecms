@@ -61,6 +61,8 @@ if( !noheader ){
   <a href="/" class="navbar-brand"><%= title %></a>
   <div class="collapse navbar-collapse target">
     <ul class="navbar-nav mr-auto">
+    </ul>
+    <ul class="navbar-nav" id="navbar">
 <%
   if( user != null ){
 %>
@@ -72,8 +74,6 @@ if( !noheader ){
 <%
   }
 %>
-    </ul>
-    <ul class="navbar-nav" id="navbar">
     </ul>
   </div>
 </nav>

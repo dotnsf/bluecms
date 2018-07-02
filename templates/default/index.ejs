@@ -1,6 +1,22 @@
 <%- include('./header', {}) %>
 
-<title><%= title %></title>
+<title><%= config.title %></title>
+<!-- //OGP -->
+<meta property="og:type" content="website"/>
+<% if( config && config.title ){ %>
+<meta property="og:title" content="<%= config.title %>"/>
+<meta property="og:site_name" content="<%= config.title %>"/>
+<% } %>
+<% if( config && config.url ){ %>
+<meta property="og:url" content="<%= config.url %>"/>
+<% } %>
+<% if( config && config.image_url ){ %>
+<meta property="og:image" content="<%= config.image_url %>"/>
+<% } %>
+<% if( config && config.desc ){ %>
+<meta property="og:description" content="<%= config.desc %>"/>
+<% } %>
+<!-- OGP// -->
 <script>
 $(function(){
 <%
@@ -97,7 +113,7 @@ function timestamp2datetime( ts ){
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a href="/" class="navbar-brand"><%= title %></a>
+  <a href="/" class="navbar-brand"><%= config.title %></a>
   <div class="collapse navbar-collapse target">
     <ul class="navbar-nav mr-auto">
     </ul>
@@ -107,8 +123,8 @@ function timestamp2datetime( ts ){
 </nav>
 
 <div class="jumbotron">
-  <h1><%= title %></h1>
-  <p><%= desc %></p>
+  <h1><%= config.title %></h1>
+  <p><%= config.desc %></p>
 </div>
 
 <div class="container" id="documents_tile" style="padding:20px 0; font-size:8px;">

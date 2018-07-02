@@ -1,7 +1,7 @@
 <%- include('./header', {}) %>
 <script type="text/javascript" src="//js.nicedit.com/nicEdit-latest.js"></script>
 
-<title><%= __('admin.head.admin') %> - <%= title %></title>
+<title><%= __('admin.head.admin') %> - <%= config.title %></title>
 <script>
 $(function(){
   //. ログインしている
@@ -15,26 +15,28 @@ if( user.role == 0 ){
 }
 %>
 
-  getTitleDesc();
+  getConfig();
   getDocuments();
   getAttachments();
 
 });
 
-function getTitleDesc(){
+function getConfig(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/titleDesc',
+    url: '/config',
     success: function( result ){
       obj.remove();
       console.log( result );
       if( result.doc ){
         $('#navbar_title').val( result.doc.title );
-        $('#titleDesc_id').val( result.doc._id );
-        $('#titleDesc_rev').val( result.doc._rev );
-        $('#titleDesc_title').val( result.doc.title );
-        $('#titleDesc_desc').val( result.doc.desc );
+        $('#config_id').val( result.doc._id );
+        $('#config_rev').val( result.doc._rev );
+        $('#config_title').val( result.doc.title );
+        $('#config_desc').val( result.doc.desc );
+        $('#config_url').val( result.doc.url );
+        $('#config_image_url').val( result.doc.image_url );
       }
     },
     error: function( err ){
@@ -207,25 +209,27 @@ function logout(){
   }
 }
 
-function updateTitleDesc(){
-  var id = $('#titleDesc_id').val();
-  var rev = $('#titleDesc_rev').val();
-  var title = $('#titleDesc_title').val();
-  var desc = $('#titleDesc_desc').val();
-  var data = { _id: id, title: title, desc: desc };
+function updateConfig(){
+  var id = $('#config_id').val();
+  var rev = $('#config_rev').val();
+  var title = $('#config_title').val();
+  var desc = $('#config_desc').val();
+  var url = $('#config_url').val();
+  var image_url = $('#config_image_url').val();
+  var data = { _id: id, title: title, desc: desc, url: url, image_url: image_url };
   if( rev ){ data['_rev'] = rev; }
   $.ajax({
     type: 'POST',
-    url: '/titleDesc',
+    url: '/config',
     data: data,
     success: function( data ){
       console.log( data );
-      getTitleDesc();
+      getConfig();
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus );
       console.log( errorThrown );
-      console.log( 'updateTitleDesc: error' );
+      console.log( 'updateConfig: error' );
     }
   });
 }
@@ -436,7 +440,7 @@ function handleFileSelect( evt ){
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a href="/" class="navbar-brand" id="navbar_title"><%= title %></a>
+  <a href="/" class="navbar-brand" id="navbar_title"><%= config.title %></a>
   <div class="collapse navbar-collapse target">
     <ul class="navbar-nav mr-auto">
     </ul>
@@ -449,18 +453,26 @@ function handleFileSelect( evt ){
 if( user.role == 0 ){
 %>
 <div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="titleDesc_table">
-    <tbody id="titleDesc_table_tbody">
-      <input type="hidden" id="titleDesc_id" value=""/>
-      <input type="hidden" id="titleDesc_rev" value=""/>
+  <table class="table table-hover table-bordered" id="config_table">
+    <tbody id="config_table_tbody">
+      <input type="hidden" id="config_id" value=""/>
+      <input type="hidden" id="config_rev" value=""/>
       <tr>
-        <td><%= __('admin.body.titleDesc.table.tbody.title') %></td>
-        <td><input type="text" style="width:500px;" id="titleDesc_title" placeholder="<%= __('titleDesc.placeholder.tilte') %>" value=""/></td>
-        <td rowspan='2'><input type="button" class="btn btn-primary" value="<%= __('titleDesc.buttonlabel.update') %>" onClick="updateTitleDesc();"/></td>
+        <td><%= __('admin.body.config.table.tbody.title') %></td>
+        <td><input type="text" style="width:500px;" id="config_title" placeholder="<%= __('config.placeholder.title') %>" value=""/></td>
+        <td rowspan='4'><input type="button" class="btn btn-primary" value="<%= __('config.buttonlabel.update') %>" onClick="updateConfig();"/></td>
       </tr>
       <tr>
-        <td><%= __('admin.body.titleDesc.table.tbody.desc') %></td>
-        <td><input type="text" style="width:500px;" id="titleDesc_desc" placeholder="<%= __('titleDesc.placeholder.desc') %>" value=""/></td>
+        <td><%= __('admin.body.config.table.tbody.desc') %></td>
+        <td><input type="text" style="width:500px;" id="config_desc" placeholder="<%= __('config.placeholder.desc') %>" value=""/></td>
+      </tr>
+      <tr>
+        <td><%= __('admin.body.config.table.tbody.url') %></td>
+        <td><input type="text" style="width:500px;" id="config_url" placeholder="<%= __('config.placeholder.url') %>" value=""/></td>
+      </tr>
+      <tr>
+        <td><%= __('admin.body.config.table.tbody.image_url') %></td>
+        <td><input type="text" style="width:500px;" id="config_image_url" placeholder="<%= __('config.placeholder.image_url') %>" value=""/></td>
       </tr>
     </tbody>
   </table>

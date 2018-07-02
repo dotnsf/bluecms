@@ -90,24 +90,29 @@ i18n.configure({
 app.use( i18n.init );
 
 app.get( '/', function( req, res ){
-  db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
+  db.get( 'config', { include_docs: true }, function( err, doc ){
     var title = 'BlueCMS';
     var desc = 'Opensource Simple Content Management System based on Node.js + IBM Cloudant.';
+    var config = {
+      title: title,
+      desc: desc,
+      url: '',
+      image_url: ''
+    };
     if( !err ){
-       title = doc.title;
-       desc = doc.desc;
+      config = doc;
     }
     if( req.session && req.session.token ){
       var token = req.session.token;
       jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
         if( !err && user ){
-          res.render( 'index', { user: user, title: title, desc: desc, theme: settings.app_theme } );
+          res.render( 'index', { user: user, config: config, theme: settings.app_theme } );
         }else{
-          res.render( 'index', { user: null, title: title, desc: desc, theme: settings.app_theme } );
+          res.render( 'index', { user: null, config: config, theme: settings.app_theme } );
         }
       });
     }else{
-      res.render( 'index', { user: null, title: title, desc: desc, theme: settings.app_theme } );
+      res.render( 'index', { user: null, config: config, desc: desc, theme: settings.app_theme } );
     }
   });
 });
@@ -120,14 +125,19 @@ app.get( '/admin', function( req, res ){
         //res.render( 'login', { message: 'Invalid token.' } );
         res.redirect( '/login?message=Invalid token.' );
       }else{
-        db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
+        db.get( 'config', { include_docs: true }, function( err, doc ){
           var title = 'BlueCMS';
           var desc = 'Opensource Simple Content Management System based on Node.js + IBM Cloudant.';
+          var config = {
+            title: title,
+            desc: desc,
+            url: '',
+            image_url: ''
+          };
           if( !err ){
-             title = doc.title;
-             desc = doc.desc;
+            config = doc;
           }
-          res.render( 'admin', { user: user, title: title, desc: desc, theme: settings.app_theme } );
+          res.render( 'admin', { user: user, config: config, theme: settings.app_theme } );
         });
       }
     });
@@ -381,19 +391,22 @@ app.get( '/docs', function( req, res ){
   }
 });
 
-app.get( '/titleDesc', function( req, res ){
+app.get( '/config', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
-  console.log( 'GET /titleDesc' );
+  console.log( 'GET /config' );
 
   if( db ){
-    db.get( 'titleDesc', { include_docs: true }, function( err, doc ){
-      if( err ){
-        doc = {
-          title: '',
-          desc: ''
-        };
+    db.get( 'config', { include_docs: true }, function( err, doc ){
+      var config = {
+        title: '',
+        desc: '',
+        url: '',
+        image_url: ''
+      };
+      if( !err ){
+        config = doc;
       }
-      res.write( JSON.stringify( { status: true, doc: doc }, 2, null ) );
+      res.write( JSON.stringify( { status: true, config: config }, 2, null ) );
       res.end();
     });
   }else{
@@ -756,9 +769,9 @@ app.delete( '/attachment/:id', function( req, res ){
 });
 
 
-app.post( '/titleDesc', function( req, res ){
+app.post( '/config', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
-  console.log( 'POST /titleDesc' );
+  console.log( 'POST /config' );
   //console.log( req.body );
   var token = ( req.session && req.session.token ) ? req.session.token : null;
   if( !token ){
@@ -781,18 +794,22 @@ app.post( '/titleDesc', function( req, res ){
           }else{
             var title = req.body.title;
             var desc = req.body.desc;
+            var url = req.body.url;
+            var image_url = req.body.image_url;
             if( title && desc ){
-              var doc = {
-                _id: 'titleDesc',
+              var config = {
+                _id: 'config',
                 title: title,
-                desc: desc
+                desc: desc,
+                url: url,
+                image_url: image_url
               };
-              db.get( 'titleDesc', { include_docs: true }, function( err, result ){
+              db.get( 'config', { include_docs: true }, function( err, result ){
                 if( !err ){
                   doc._rev = result._rev;
                 }
 
-                db.insert( doc, function( err, body ){ //. insert
+                db.insert( config, function( err, body ){ //. insert
                   if( err ){
                     res.status( 400 );
                     res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
