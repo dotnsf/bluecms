@@ -416,9 +416,38 @@ function deleteAttachment(id){
   }
 }
 
-function updateNLC(){
-  console.log( 'updateNLC()' );
+function classify(){
+  $.ajax({
+    type: 'POST',
+    url: '/classifyNLC',
+    data: {},
+    success: function( data ){
+      console.log( data );
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
+      console.log( 'classify: error' );
+    }
+  });
+}
 
+function getNLC(){
+  $.ajax({
+    type: 'GET',
+    url: '/trainingNLC',
+    success: function( data ){
+      console.log( data );
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus );
+      console.log( errorThrown );
+      console.log( 'getNLC: error' );
+    }
+  });
+}
+
+function updateNLC(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'POST',
@@ -549,6 +578,8 @@ if( config.nlc ){
 %>
 <div class="container" style="padding:0 0; font-size:8px;">
   <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.updatenlc') %>" onClick="updateNLC();"/>
+  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.getnlc') %>" onClick="getNLC();"/>
+  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.classify') %>" onClick="classify();"/>
 </div>
 <%
 }

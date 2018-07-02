@@ -9,8 +9,10 @@ var fs = require( 'fs' );
 var i18n = require( 'i18n' );
 var jwt = require( 'jsonwebtoken' );
 var multer = require( 'multer' );
+var os = require( 'os' );
 var session = require( 'express-session' );
 var uuidv1 = require( 'uuid/v1' );
+var nlcv1 = require( 'watson-developer-cloud/natural-language-classifier/v1' );
 var app = express();
 
 var settings = require( './settings' );
@@ -60,6 +62,16 @@ if( settings.db_username && settings.db_password ){
       }
     });
   }
+}
+
+var nlc = null;
+if( settings.nlc_username && settings.nlc_password ){
+  nlc = new nlcv1({
+    username: settings.nlc_username,
+    password: settings.nlc_password,
+    version: 'v1',
+    url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/'
+  });
 }
 
 app.set( 'superSecret', settings.superSecret );
@@ -1031,6 +1043,132 @@ app.post( '/reset', function( req, res ){
   }
 });
 
+
+app.post( '/classify', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'POST /classify' );
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( nlc ){
+          nlc.listClassifiers( {}, ( err1, body1 ) => {
+            if( err1 ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
+              res.end();
+            }else{
+              var classifier_id = null;
+              if( body1 && body1.classifiers && body1.classifiers.length ){
+                body1.classifiers.forEach( function( classifier ){
+                  if( classifier.name == settings.nlc_name ){
+                    classifier_id = classifier.classifier_id;
+                  }
+                });
+              }
+              if( classifier_id ){
+                var params2 = {
+                  classifier_id: classifier_id,
+                  text: req.body.text
+                };
+                nlc.classify( params2, ( err2, body2 ) => {
+                  if( err2 ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, message: body2 }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }else{
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+                res.end();
+              }
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
+app.get( '/trainingNLC', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'GET /trainingNLC' );
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        //. 現在の classifiers 一覧
+        if( nlc ){
+          //. http://watson-developer-cloud.github.io/node-sdk/master/classes/naturallanguageclassifierv1.htmlhttp://watson-developer-cloud.github.io/node-sdk/master/classes/naturallanguageclassifierv1.html
+          nlc.listClassifiers( {}, ( err1, body1 ) => {
+            if( err1 ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
+              res.end();
+            }else{
+              var classifier_id = null;
+              if( body1 && body1.classifiers && body1.classifiers.length ){
+                body1.classifiers.forEach( function( classifier ){
+                  if( classifier.name == settings.nlc_name ){
+                    classifier_id = classifier.classifier_id;
+                  }
+                });
+              }
+              if( classifier_id ){
+                var params2 = { classifier_id: classifier_id };
+                nlc.getClassifier( params2, ( err2, body2 ) => {
+                  if( err2 ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, body: body2 }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }else{
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+                res.end();
+              }
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
 app.post( '/trainingNLC', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   console.log( 'POST /trainingNLC' );
@@ -1069,79 +1207,74 @@ app.post( '/trainingNLC', function( req, res ){
                     _doc.body = removeHtmlTag( _doc.body );
                     //docs.push( _doc );
                     docs.push( { category: _doc.category, body: _doc.body } );
-                    var line = _doc.body + "," + _doc.category + "¥r¥n";
+                    var line = _doc.body + "," + _doc.category + os.EOL;
                     training_data += line;
                   }
                 }
               });
 
               //. 現在の classifiers 一覧
-              var user_pass = encodeURIComponent( settings.nlc_username + ':' + settings.nlc_password );
-              var options1 = {
-                url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers',
-                method: 'GET',
-                headers: {
-                  'Authorization': 'Basic ' + user_pass
-                }
-              };
-              request( options1, ( err1, res1, body1 ) => {
-                if( err1 ){
-                  res.status( 400 );
-                  res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
-                  res.end();
-                }else{
-                  var classifier_id = null;
-                  if( body1['application/json']['classifiers'] ){
-                    var classifiers = body1['application/json']['classifiers'];
-                    classifiers.forEach( function( classifier ){
-                      if( classifier.name == settings.nlc_name ){
-                        classifier_id = classifier.classifier_id;
-                      }
-                    });
-                  }
-
-                  if( classifier_id ){
-                    //. 既存の classifier が存在していたら削除
-                    var options2 = {
-                      url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers/' + classifier_id,
-                      method: 'DELETE',
-                      headers: {
-                        'Authorization': 'Basic ' + user_pass
-                      }
-                    };
-                    request( options2, ( err2, res2, body2 ) => {
-                      if( err2 ){
-                        res.status( 400 );
-                        res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
-                        res.end();
-                      }else{
-                        var options3 = {
-                          url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/v1/classifiers',
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'multipart/form-data',
-                            'Authorization': 'Basic ' + user_pass
-                          },
-                          data: {
-                          }
-                        };
-
-                        //. classifier 作成
-                        res.write( JSON.stringify( { status: true, training_metadata: training_metadata, training_data: training_data }, 2, null ) );
-                        res.end();
-                      }
-                    });
-                  }else{
-                    //. classifier 作成
-                    res.write( JSON.stringify( { status: true, training_metadata: training_metadata, training_data: training_data }, 2, null ) );
+              if( nlc ){
+                //. http://watson-developer-cloud.github.io/node-sdk/master/classes/naturallanguageclassifierv1.htmlhttp://watson-developer-cloud.github.io/node-sdk/master/classes/naturallanguageclassifierv1.html
+                nlc.listClassifiers( {}, ( err1, body1 ) => {
+                  if( err1 ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
                     res.end();
-                  }
-                }
-              });
+                  }else{
+                    var classifier_id = null;
+                    if( body1 && body1.classifiers && body1.classifiers.length ){
+                      body1.classifiers.forEach( function( classifier ){
+                        if( classifier.name == settings.nlc_name ){
+                          classifier_id = classifier.classifier_id;
+                        }
+                      });
+                    }
 
-              var result = { status: true, docs: docs };
-              res.write( JSON.stringify( result, 2, null ) );
-              res.end();
+                    if( classifier_id ){
+                      nlc.deleteClassifier( { classifier_id: classifier_id }, ( err2, body1 ) => {
+                        if( err2 ){
+                          res.status( 400 );
+                          res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
+                          res.end();
+                        }else{
+                          nlc.createClassifier( params3, ( err3, body3 ) => {
+                            if( err3 ){
+                              res.status( 400 );
+                              res.write( JSON.stringify( { status: false, message: err3 }, 2, null ) );
+                              res.end();
+                            }else{
+                              res.write( JSON.stringify( { status: true, message: body3 }, 2, null ) );
+                              res.end();
+                            }
+                          });
+                        }
+                      });
+                    }else{
+                      var params3 = {
+                        metadata: new Buffer( training_metadata, 'UTF-8' ),
+                        training_data: new Buffer( training_data, 'UTF-8' )   
+                      };
+                      nlc.createClassifier( params3, ( err3, body3 ) => {
+                        if( err3 ){
+console.log( err3 );
+                          res.status( 400 );
+                          res.write( JSON.stringify( { status: false, message: err3 }, 2, null ) );
+                          res.end();
+                        }else{
+console.log( body3 );
+                          res.write( JSON.stringify( { status: true, message: body3 }, 2, null ) );
+                          res.end();
+                        }
+                      });
+                    }
+                  }
+                });
+              }else{
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+                res.end();
+              }
             }
           });
         }else{

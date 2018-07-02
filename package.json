@@ -15,7 +15,8 @@
         "jsonwebtoken": "7.4.x",
         "multer": "1.1.x",
         "request": "2.83.0",
-        "uuid": "3.3.0"
+        "uuid": "3.3.0",
+        "watson-developer-cloud": "3.5.3"
     },
     "repository": {},
     "engines": {

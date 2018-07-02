@@ -67,5 +67,6 @@
 	"config.placeholder.url": "url",
 	"documents.placeholder.category": "category",
 	"admin.body.documents.table.thead.category": "category",
-	"documents.buttonlabel.updatenlc": "update NLC"
+	"documents.buttonlabel.updatenlc": "update NLC",
+	"documents.buttonlabel.getnlc": "NLC status"
 }
