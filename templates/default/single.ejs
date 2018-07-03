@@ -50,6 +50,9 @@ function timestamp2datetime( ts ){
 #colorbox{
   width: 90%;
 }
+body{
+  background-color: '#ccccff';
+}
 </style>
 </head>
 <body>
@@ -63,6 +66,14 @@ if( !noheader ){
     <ul class="navbar-nav mr-auto">
     </ul>
     <ul class="navbar-nav" id="navbar">
+      <!--
+      <li class="nav-item">
+        <a href="http://twitter.com/share?url=<%= config.url %>&text=<%= config.title %>" target="_blank">twitter</a>
+      </li>
+      <li class="nav-item">
+        <a href="http://www.facebook.com/sharer.php?u=<%= config.url %>&amp;t=<%= config.title %>" target="_blank" rel="nowfollow">facebook</a>
+      </li>
+      -->
 <%
   if( user != null ){
 %>

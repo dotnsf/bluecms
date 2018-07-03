@@ -1198,8 +1198,9 @@ app.post( '/trainingNLC', function( req, res ){
               res.end();
             }else{
               var docs = [];
+              var training_lang = ( settings.nlc_language ? settings.nlc_language : 'en' );
               var training_data = '';
-              var training_metadata = '{"language":"ja","name":"' + settings.nlc_name + '"}';
+              var training_metadata = '{"language":"' + training_lang + '","name":"' + settings.nlc_name + '"}';
               body.rows.forEach( function( doc ){
                 var _doc = JSON.parse(JSON.stringify(doc.doc));
                 if( _doc._id.indexOf( '_' ) !== 0 ){
@@ -1253,16 +1254,14 @@ app.post( '/trainingNLC', function( req, res ){
                     }else{
                       var params3 = {
                         metadata: new Buffer( training_metadata, 'UTF-8' ),
-                        training_data: new Buffer( training_data, 'UTF-8' )   
+                        training_data: new Buffer( training_data, 'UTF-8' )
                       };
                       nlc.createClassifier( params3, ( err3, body3 ) => {
                         if( err3 ){
-console.log( err3 );
                           res.status( 400 );
                           res.write( JSON.stringify( { status: false, message: err3 }, 2, null ) );
                           res.end();
                         }else{
-console.log( body3 );
                           res.write( JSON.stringify( { status: true, message: body3 }, 2, null ) );
                           res.end();
                         }
@@ -1286,6 +1285,67 @@ console.log( body3 );
     });
   }
 });
+
+app.delete( '/trainingNLC', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'DELETE /trainingNLC' );
+  //console.log( req.body );
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+        if( nlc ){
+          nlc.listClassifiers( {}, ( err1, body1 ) => {
+            if( err1 ){
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, message: err1 }, 2, null ) );
+              res.end();
+            }else{
+              var classifier_id = null;
+              if( body1 && body1.classifiers && body1.classifiers.length ){
+                body1.classifiers.forEach( function( classifier ){
+                  if( classifier.name == settings.nlc_name ){
+                    classifier_id = classifier.classifier_id;
+                  }
+                });
+              }
+
+              if( classifier_id ){
+                nlc.deleteClassifier( { classifier_id: classifier_id }, ( err2, body2 ) => {
+                  if( err2 ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err2 }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, body: body2 }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }else{
+                res.write( JSON.stringify( { status: true, message: 'Not existed.' }, 2, null ) );
+                res.end();
+              }
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'No NLC available.' }, 2, null ) );
+          res.end();
+        }
+      }
+    });
+  }
+});
+
 
 function deleteDoc( doc_id ){
   console.log( "deleting document: " + doc_id );

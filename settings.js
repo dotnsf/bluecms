@@ -8,6 +8,7 @@ exports.superSecret = 'welovebluecms';
 exports.nlc_username = '';
 exports.nlc_password = '';
 exports.nlc_name = 'bluecms';
+exports.nlc_language = 'ja';
 
 if( process.env.VCAP_SERVICES ){
   var VCAP_SERVICES = JSON.parse( process.env.VCAP_SERVICES );

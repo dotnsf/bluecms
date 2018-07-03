@@ -23,12 +23,12 @@ $(function(){
   if( user != null ){
 %>
     //. ログインしている
-    $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
+    $('#navbar').append( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
 <%
   }else{
 %>
     //. ログインしていない
-    $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>' );
+    $('#navbar').append( '<li class="nav-item"><a class="nav-link" href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>' );
 <%
   }
 %>
@@ -48,6 +48,7 @@ function getDocuments(){
         var documents = result.docs;
         documents.forEach( function( doc ){
           if( doc.status > 0 ){
+            console.log( doc );
             var div = '<div class="card">'
               + '<div class="card-header">' + doc.title + '</div>'
               + '<div class="card-body">'
@@ -106,6 +107,9 @@ function timestamp2datetime( ts ){
 }
 </script>
 <style>
+body{
+  background-color: '#ccccff';
+}
 #colorbox{
   width: 90%;
 }
@@ -119,6 +123,14 @@ function timestamp2datetime( ts ){
     <ul class="navbar-nav mr-auto">
     </ul>
     <ul class="navbar-nav" id="navbar">
+      <!--
+      <li class="nav-item">
+        <a href="http://twitter.com/share?url=<%= config.url %>&text=<%= config.title %>" target="_blank">twitter</a>
+      </li>
+      <li class="nav-item">
+        <a href="http://www.facebook.com/sharer.php?u=<%= config.url %>&amp;t=<%= config.title %>" target="_blank" rel="nowfollow">facebook</a>
+      </li>
+      -->
     </ul>
   </div>
 </nav>
