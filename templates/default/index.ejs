@@ -50,16 +50,16 @@ function getDocuments(){
     url: '/docs?type=document&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ),
     success: function( result ){
       obj.remove();
-      console.log( result );
+      //console.log( result );
       if( result.status ){
         var documents = result.docs;
         documents.forEach( function( doc ){
           if( doc.status > 0 ){
             //console.log( doc );
             div = '<div class="doc">'
-              + '<div class="doc-header">' + doc.title + '</div>'
+              + '<div class="doc-header"><a class="nounderline" href="./single/' + doc._id + '">' + doc.title + '</a></div>'
               + '<div class="doc-body">'
-              + '<p class="doc-text"><a class="colorbox nounderline" href="./single/' + doc._id + '?noheader=1">' + doc.body + '</a></p>'
+              + '<p class="doc-text">' + doc.body + '</p>'
               + '<p class="doc-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
               + '<p id="doc_category" class="doc-category" style="text-align:right;">' + doc.category + '</p>'
               + '</div>'
@@ -68,7 +68,6 @@ function getDocuments(){
             $('#documents_tile').append( div );
           }
         });
-        $('.colorbox').colorbox();
 
         //. Navigation
         var table = '<table class="table">'
@@ -160,9 +159,6 @@ function timestamp2datetime( ts ){
 <style>
 body{
   background-color: #ddf;
-}
-#colorbox{
-  width: 90%;
 }
 .index-header{
   background-color: #cce;
