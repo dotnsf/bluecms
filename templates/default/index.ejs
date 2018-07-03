@@ -56,14 +56,15 @@ function getDocuments(){
         documents.forEach( function( doc ){
           if( doc.status > 0 ){
             //console.log( doc );
-            var div = '<div class="card">'
-              + '<div class="card-header">' + doc.title + '</div>'
-              + '<div class="card-body">'
-              + '<p class="card-text"><a class="colorbox" href="./single/' + doc._id + '?noheader=1">' + doc.body + '</a></p>'
-              + '<p class="card-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
-              + '<p id="doc_category">' + doc.category + '</p>'
+            div = '<div class="doc">'
+              + '<div class="doc-header">' + doc.title + '</div>'
+              + '<div class="doc-body">'
+              + '<p class="doc-text"><a class="colorbox nounderline" href="./single/' + doc._id + '?noheader=1">' + doc.body + '</a></p>'
+              + '<p class="doc-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
+              + '<p id="doc_category" class="doc-category" style="text-align:right;">' + doc.category + '</p>'
               + '</div>'
               + '</div>';
+
             $('#documents_tile').append( div );
           }
         });
@@ -158,16 +159,53 @@ function timestamp2datetime( ts ){
 </script>
 <style>
 body{
-  background-color: '#ccccff';
+  background-color: #ddf;
 }
 #colorbox{
   width: 90%;
+}
+.index-header{
+  background-color: #cce;
+  color: #333;
+}
+.jumbotron{
+  margin: auto;
+  width: 90%;
+  background-color: #5aa;
+  color: #fff;
+}
+.doc{
+  width: 100%;
+  background-color: #eef;
+}
+.doc-header{
+  font-size: 20px;
+  background-color: #338;
+  color: #ccc;
+  width: 100%;
+}
+.doc-body{
+  font-size: 20px;
+  background-color: #eef;
+  color: #003;
+  width: 100%;
+}
+.doc-text{
+  font-size: 20px;
+  color: #008;
+}
+.doc-category{
+  font-size: 20px;
+  color: #088;
+}
+a.nounderline{
+  text-decoration: none;
 }
 </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light index-header">
   <a href="/" class="navbar-brand"><%= config.title %></a>
   <div class="collapse navbar-collapse target">
     <ul class="navbar-nav mr-auto">

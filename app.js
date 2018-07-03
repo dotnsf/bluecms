@@ -66,11 +66,12 @@ if( settings.db_username && settings.db_password ){
 
 var nlc = null;
 if( settings.nlc_username && settings.nlc_password ){
+  var url = ( settings.nlc_url ? settings.nlc_url : 'https://gateway.watsonplatform.net/natural-language-classifier/api/' );
   nlc = new nlcv1({
     username: settings.nlc_username,
     password: settings.nlc_password,
     version: 'v1',
-    url: 'https://gateway.watsonplatform.net/natural-language-classifier/api/'
+    url: url
   });
 }
 
@@ -262,15 +263,35 @@ app.get( '/single/:id', function( req, res ){
   console.log( 'GET /single/' + id + '?noheader=' + noheader );
 
   if( db ){
-    db.get( id, { include_docs: true }, function( err, doc ){
-      if( err ){
-        res.render( 'single', { id: id, title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
-      }else{
-        res.render( 'single', { id: id, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
+    db.get( 'config', { include_docs: true }, function( err, doc ){
+      var title = 'BlueCMS';
+      var desc = 'Opensource Simple Content Management System based on Node.js + IBM Cloudant.';
+      var config = {
+        title: title,
+        desc: desc,
+        url: '',
+        image_url: ''
+      };
+      if( !err ){
+        config = doc;
       }
+
+      db.get( id, { include_docs: true }, function( err, doc ){
+        if( err ){
+          res.render( 'single', { id: id, config: config, title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+        }else{
+          res.render( 'single', { id: id, config: config, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
+        }
+      });
     });
   }else{
-    res.render( 'single', { id: id, title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+    var config = {
+      title: '',
+      desc: '',
+      url: '',
+      image_url: ''
+    };
+    res.render( 'single', { id: id, config: config, title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
   }
 });
 
