@@ -68,10 +68,10 @@ if( !noheader ){
     <ul class="navbar-nav" id="navbar">
       <!--
       <li class="nav-item">
-        <a href="http://twitter.com/share?url=<%= config.url %>&text=<%= config.title %>" target="_blank">twitter</a>
+        <a href="http://twitter.com/share?url=&text=" target="_blank">twitter</a>
       </li>
       <li class="nav-item">
-        <a href="http://www.facebook.com/sharer.php?u=<%= config.url %>&amp;t=<%= config.title %>" target="_blank" rel="nowfollow">facebook</a>
+        <a href="http://www.facebook.com/sharer.php?u=&amp;t=" target="_blank" rel="nowfollow">facebook</a>
       </li>
       -->
 <%
@@ -99,6 +99,13 @@ if( !noheader ){
       <p class="card-text"><%- body %></p>
       <p class="card-text" style="text-align:right;"><%= datetime %>(<% user ? user.name : '???' %>)</p>
       <p id="doc_category"><%= category %></p>
+<%
+if( noheader ){
+%>
+      <a target="_blank" href="./single/<%= id %>" class="card-link"><%= __('single.linktitle.another') %></a>
+<%
+}
+%>
     </div>
   </div>
 </div>

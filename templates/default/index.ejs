@@ -18,12 +18,19 @@
 <% } %>
 <!-- OGP// -->
 <script>
+var doc_limit = 3;
+var doc_page = 0;
 $(function(){
 <%
   if( user != null ){
 %>
     //. ログインしている
-    $('#navbar').append( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
+    //$('#navbar').append( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
+    var dropdown = '<div class="dropdown"><button type="button" class="btn dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> <%= user.name %></button>'
+      + '<div class="dropdown-menu"><a class="dropdown-item" class="nav-link" href="./admin" title="admin">Admin</a>'
+      + '<a class="dropdown-item" class="nav-link" href="#" title="logout" onClick="logout()">Logout</a></div>'
+      + '</div>';
+    $('#navbar').append( '<li class="nav-item">' + dropdown + '</li>' );
 <%
   }else{
 %>
@@ -40,7 +47,7 @@ function getDocuments(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/docs?type=document',
+    url: '/docs?type=document&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ),
     success: function( result ){
       obj.remove();
       console.log( result );
@@ -48,11 +55,11 @@ function getDocuments(){
         var documents = result.docs;
         documents.forEach( function( doc ){
           if( doc.status > 0 ){
-            console.log( doc );
+            //console.log( doc );
             var div = '<div class="card">'
               + '<div class="card-header">' + doc.title + '</div>'
               + '<div class="card-body">'
-              + '<p class="card-text"><a class="colorbox" href="single/' + doc._id + '?noheader=1">' + doc.body.substr( 0, 80 ) + '..</a></p>'
+              + '<p class="card-text"><a class="colorbox" href="./single/' + doc._id + '?noheader=1">' + doc.body + '</a></p>'
               + '<p class="card-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
               + '<p id="doc_category">' + doc.category + '</p>'
               + '</div>'
@@ -61,6 +68,17 @@ function getDocuments(){
           }
         });
         $('.colorbox').colorbox();
+
+        //. Navigation
+        var table = '<table class="table">'
+          + '<tr>'
+          + '<td style="text-align:left;" id="document_prev">&lt;&lt;</td>'
+          + '<td style="text-align:right;" id="document_next">&gt;&gt;</td>'
+          + '</tr>'
+          + '</table>';
+        $('#documents_tile').append( table );
+        enablePrev( ( doc_page > 0 ) );
+        enableNext( ( documents.length == doc_limit ) );
       }
     },
     error: function( err ){
@@ -68,6 +86,38 @@ function getDocuments(){
       console.log( err );
     }
   });
+}
+
+function enablePrev( b ){
+  if( b ){
+    $('#document_prev').css( 'color', '#008' );
+    $('#document_prev').css( 'cursor', 'pointer' );
+    $('#document_prev').click( function(){
+      doc_page --;
+      getDocuments();
+    });
+  }else{
+    $('#document_prev').css( 'color', '#ccc' );
+    $('#document_prev').css( 'cursor', 'default' );
+    $('#document_prev').click( function(){
+    });
+  }
+}
+
+function enableNext( b ){
+  if( b ){
+    $('#document_next').css( 'color', '#008' );
+    $('#document_next').css( 'cursor', 'pointer' );
+    $('#document_next').click( function(){
+      doc_page ++;
+      getDocuments();
+    });
+  }else{
+    $('#document_next').css( 'color', '#ccc' );
+    $('#document_next').css( 'cursor', 'default' );
+    $('#document_next').click( function(){
+    });
+  }
 }
 
 function logout(){

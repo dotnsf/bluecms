@@ -69,5 +69,6 @@
 	"admin.body.documents.table.thead.category": "category",
 	"documents.buttonlabel.updatenlc": "update NLC",
 	"documents.buttonlabel.getnlc": "NLC status",
-	"documents.buttonlabel.classify": "classify"
+	"documents.buttonlabel.classify": "classify",
+	"single.linktitle.another": "(another window)"
 }

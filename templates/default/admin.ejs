@@ -3,6 +3,12 @@
 
 <title><%= __('admin.head.admin') %> - <%= config.title %></title>
 <script>
+var user_limit = 10;
+var user_page = 0;
+var doc_limit = 10;
+var doc_page = 0;
+var attachment_limit = 10;
+var attachment_page = 0;
 $(function(){
   //. ログインしている
   $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
@@ -18,7 +24,6 @@ if( user.role == 0 ){
   getConfig();
   getDocuments();
   getAttachments();
-
 });
 
 function getConfig(){
@@ -51,7 +56,7 @@ function getUsers(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/docs?type=user',
+    url: '/docs?type=user&limit=' + user_limit + '&offset=' + ( user_limit * user_page ),
     success: function( result ){
       obj.remove();
       //console.log( result );
@@ -86,6 +91,15 @@ function getUsers(){
           + "<td><input type='button' class='btn btn-primary' value='<%= __('users.buttonlabel.update') %>' onClick='updateUser();'/></td>"
           + "</tr>";
         $('#users_table_tbody').append( tr );
+
+        //. Navigation
+        var tr =  '<tr>'
+          + '<td colspan="4" style="text-align:left;" id="user_prev">&lt;&lt;</td>'
+          + '<td colspan="4"" style="text-align:right;" id="user_next">&gt;&gt;</td>'
+          + '</tr>';
+        $('#users_table_tbody').append( tr );
+        enableUsersPrev( ( user_page > 0 ) );
+        enableUsersNext( ( users.length == user_limit ) );
       }
     },
     error: function( err ){
@@ -100,7 +114,7 @@ function getDocuments(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/docs?type=document',
+    url: '/docs?type=document&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ),
     success: function( result ){
       //console.log( result );
       obj.remove();
@@ -109,7 +123,7 @@ function getDocuments(){
         var cnt = 1;
         documents.forEach( function( doc ){
           var tr = '<tr>'
-            + '<td>' + ( cnt ++ ) + '</td>'
+            + '<td>' + ( ( doc_page * doc_limit ) + ( cnt ++ ) ) + '</td>'
             + '<td>' + doc.title + '</td>'
             + '<td>' + doc.body + '</td>'
             + '<td>' + doc.category + '</td>'
@@ -135,6 +149,15 @@ function getDocuments(){
           + "</tr>";
         $('#documents_table_tbody').append( tr );
         nicEditors.allTextAreas();
+
+        //. Navigation
+        var tr =  '<tr>'
+          + '<td colspan="4" style="text-align:left;" id="document_prev">&lt;&lt;</td>'
+          + '<td colspan="4"" style="text-align:right;" id="document_next">&gt;&gt;</td>'
+          + '</tr>';
+        $('#documents_table_tbody').append( tr );
+        enableDocumentsPrev( ( doc_page > 0 ) );
+        enableDocumentsNext( ( documents.length == doc_limit ) );
       }
     },
     error: function( err ){
@@ -181,6 +204,15 @@ function getAttachments(){
           + "<td><input type='button' class='btn btn-primary' value='<%= __('attachments.buttonlabel.update') %>' onClick='updateAttachment();'/></td>"
           + "</tr>";
         $('#attachments_table_tbody').append( tr );
+
+        //. Navigation
+        var tr =  '<tr>'
+          + '<td colspan="3" style="text-align:left;" id="attachment_prev">&lt;&lt;</td>'
+          + '<td colspan="4"" style="text-align:right;" id="attachment_next">&gt;&gt;</td>'
+          + '</tr>';
+        $('#attachments_table_tbody').append( tr );
+        enableAttachmentsPrev( ( attachment_page > 0 ) );
+        enableAttachmentsNext( ( attachments.length == attachment_limit ) );
 
         document.getElementById( 'attachment_file' ).addEventListener( 'change', handleFileSelect, false );
       }
@@ -491,6 +523,102 @@ function handleFileSelect( evt ){
     //console.log( 'i = ' + i );
     //console.log( file );
     $('#attachment_filename').val( file.name );
+  }
+}
+
+function enableUsersPrev( b ){
+  if( b ){
+    $('#user_prev').css( 'color', '#008' );
+    $('#user_prev').css( 'cursor', 'pointer' );
+    $('#user_prev').click( function(){
+      user_page --;
+      getUsers();
+    });
+  }else{
+    $('#user_prev').css( 'color', '#ccc' );
+    $('#user_prev').css( 'cursor', 'default' );
+    $('#user_prev').click( function(){
+    });
+  }
+}
+
+function enableUsersNext( b ){
+  if( b ){
+    $('#user_next').css( 'color', '#008' );
+    $('#user_next').css( 'cursor', 'pointer' );
+    $('#user_next').click( function(){
+      user_page ++;
+      getUsers();
+    });
+  }else{
+    $('#user_next').css( 'color', '#ccc' );
+    $('#user_next').css( 'cursor', 'default' );
+    $('#user_next').click( function(){
+    });
+  }
+}
+
+function enableDocumentsPrev( b ){
+  if( b ){
+    $('#document_prev').css( 'color', '#008' );
+    $('#document_prev').css( 'cursor', 'pointer' );
+    $('#document_prev').click( function(){
+      doc_page --;
+      getDocuments();
+    });
+  }else{
+    $('#document_prev').css( 'color', '#ccc' );
+    $('#document_prev').css( 'cursor', 'default' );
+    $('#document_prev').click( function(){
+    });
+  }
+}
+
+function enableDocumentsNext( b ){
+  if( b ){
+    $('#document_next').css( 'color', '#008' );
+    $('#document_next').css( 'cursor', 'pointer' );
+    $('#document_next').click( function(){
+      doc_page ++;
+      getDocuments();
+    });
+  }else{
+    $('#document_next').css( 'color', '#ccc' );
+    $('#document_next').css( 'cursor', 'default' );
+    $('#document_next').click( function(){
+    });
+  }
+}
+
+function enableAttachmentsPrev( b ){
+  if( b ){
+    $('#attachment_prev').css( 'color', '#008' );
+    $('#attachment_prev').css( 'cursor', 'pointer' );
+    $('#attachment_prev').click( function(){
+      attachment_page --;
+      getAttachments();
+    });
+  }else{
+    $('#attachment_prev').css( 'color', '#ccc' );
+    $('#attachment_prev').css( 'cursor', 'default' );
+    $('#attachment_prev').click( function(){
+    });
+  }
+}
+
+function enableAttachmentsNext( b ){
+  if( b ){
+    $('#attachment_next').css( 'color', '#008' );
+    $('#attachment_next').css( 'cursor', 'pointer' );
+    $('#attachment_next').click( function(){
+      attachment_page ++;
+      getAttachments();
+    });
+  }else{
+    $('#attachment_next').css( 'color', '#ccc' );
+    $('#attachment_next').css( 'cursor', 'default' );
+    $('#attachment_next').click( function(){
+    });
   }
 }
 </script>
