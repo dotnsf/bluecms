@@ -457,6 +457,54 @@ app.get( '/config', function( req, res ){
   }
 });
 
+app.get( '/searchDocuments', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  console.log( 'GET /searchDocuments' );
+  /*
+  var token = ( req.session && req.session.token ) ? req.session.token : null;
+  if( !token ){
+    res.status( 401 );
+    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
+    res.end();
+  }else{
+    //. トークンをデコード
+    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
+      if( err ){
+        res.status( 401 );
+        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
+        res.end();
+      }else{
+      */
+        if( db ){
+          var q = req.query.q;
+          if( q ){
+            db.search( 'documents', 'newSearch', { q: q, include_docs: true }, function( err, body ){
+              if( err ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                res.end();
+              }else{
+                res.write( JSON.stringify( { status: true, docs: body }, 2, null ) );
+                res.end();
+              }
+            });
+          }else{
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
+            res.end();
+          }
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+          res.end();
+        }
+  /*
+      }
+    });
+  }
+  */
+});
+
 
 //. ここより上で定義する API には認証フィルタをかけない
 //. ここより下で定義する API には認証フィルタをかける
@@ -877,50 +925,6 @@ app.post( '/config', function( req, res ){
   }
 });
 
-
-app.get( '/searchDocuments', function( req, res ){
-  res.contentType( 'application/json; charset=utf-8' );
-  console.log( 'GET /searchDocuments' );
-  var token = ( req.session && req.session.token ) ? req.session.token : null;
-  if( !token ){
-    res.status( 401 );
-    res.write( JSON.stringify( { status: false, result: 'No token provided.' }, 2, null ) );
-    res.end();
-  }else{
-    //. トークンをデコード
-    jwt.verify( token, app.get( 'superSecret' ), function( err, user ){
-      if( err ){
-        res.status( 401 );
-        res.write( JSON.stringify( { status: false, result: 'Invalid token.' }, 2, null ) );
-        res.end();
-      }else{
-        if( db ){
-          var q = req.query.q;
-          if( q ){
-            db.search( 'documents', 'newSearch', { q: q }, function( err, body ){
-              if( err ){
-                res.status( 400 );
-                res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-                res.end();
-              }else{
-                res.write( JSON.stringify( { status: true, result: body }, 2, null ) );
-                res.end();
-              }
-            });
-          }else{
-            res.status( 400 );
-            res.write( JSON.stringify( { status: false, message: 'parameter: q is required.' }, 2, null ) );
-            res.end();
-          }
-        }else{
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
-          res.end();
-        }
-      }
-    });
-  }
-});
 
 app.get( '/searchUsers', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
@@ -1435,7 +1439,7 @@ function createDesignDocuments(){
     },
     indexes: {
       newSearch: {
-        "analyzer": "Japanese",
+        "analyzer": "japanese",
         "index": "function (doc) { index( 'default', [doc.title,doc.category,doc.body].join( ' ' ) ); }"
       }
     }
@@ -1460,7 +1464,7 @@ function createDesignDocuments(){
     },
     indexes: {
       newSearch: {
-        "analyzer": "Japanese",
+        "analyzer": "japanese",
         "index": "function (doc) { index( 'default', [doc.name,doc.email].join( ' ' ) ); }"
       }
     }
@@ -1485,7 +1489,7 @@ function createDesignDocuments(){
     },
     indexes: {
       newSearch: {
-        "analyzer": "Japanese",
+        "analyzer": "japanese",
         "index": "function (doc) { index( 'default', [doc.name,doc.filename].join( ' ' ) ); }"
       }
     }

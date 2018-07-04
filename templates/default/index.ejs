@@ -18,6 +18,7 @@
 <% } %>
 <!-- OGP// -->
 <script>
+var doc_q = '';
 var doc_limit = 3;
 var doc_page = 0;
 $(function(){
@@ -40,6 +41,60 @@ $(function(){
   }
 %>
   getDocuments();
+
+  $('#search_form').submit( function(){
+    doc_q = $('#q').val();
+    if( doc_q ){
+      doc_page = 0;
+      $('#documents_tile').html( '' );
+      var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
+      $.ajax({
+        type: 'GET',
+        url: '/searchDocuments?q=' + doc_q + '&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ),
+        success: function( result ){
+          obj.remove();
+          if( result.status ){
+            var docs = result.docs.rows;
+            docs.forEach( function( doc ){
+              var _doc = doc.doc;
+
+              div = '<div class="doc">'
+                + '<div class="doc-header"><a class="nounderline" href="./single/' + _doc._id + '">' + _doc.title + '</a></div>'
+                + '<div class="doc-body">'
+                + '<p class="doc-text">' + _doc.body + '</p>'
+                + '<p class="doc-text" style="text-align:right;">' + timestamp2datetime( _doc.timestamp ) + '(' + _doc.user.name + ')</p>'
+                + '<p id="doc_category" class="doc-category" style="text-align:right;">' + _doc.category + '</p>'
+                + '</div>'
+                + '</div>';
+
+              $('#documents_tile').append( div );
+            });
+
+            //. Navigation
+            /*
+            var table = '<table class="table">'
+              + '<tr>'
+              + '<td style="text-align:left;" id="document_prev">&lt;&lt;</td>'
+              + '<td style="text-align:right;" id="document_next">&gt;&gt;</td>'
+              + '</tr>'
+              + '</table>';
+            $('#documents_tile').append( table );
+            enablePrev( ( doc_page > 0 ) );
+            enableNext( ( docs.length == doc_limit ) );
+            */
+          }
+        },
+        error: function( jqXHR, textStatus, errorThrown ){
+          obj.remove();
+          console.log( textStatus );
+          console.log( errorThrown );
+          console.log( 'searchDocuments: error' );
+        }
+      });
+    }
+
+    return false;
+  });
 });
 
 function getDocuments(){
@@ -207,6 +262,13 @@ a.nounderline{
     <ul class="navbar-nav mr-auto">
     </ul>
     <ul class="navbar-nav" id="navbar">
+      <li class="nav-item">
+        <form id="search_form">
+          <div class="form-group">
+            <input type="text" name="q" id="q" class="form-control" placeholder="search"/>
+          </div>
+        </form>
+      </li>
       <!--
       <li class="nav-item">
         <a href="http://twitter.com/share?url=<%= config.url %>&text=<%= config.title %>" target="_blank">twitter</a>
