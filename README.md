@@ -266,7 +266,11 @@ BlueCMS can integrate with IBM Watson NLC(Natural Language Classifier) only if y
         - After you input body field in document edit area, you can click 'classify' button to ask IBM Watson NLC. Then you will find IBM Watson NLC's answer in category field.
 
 
-## Referers
+## References
+
+- npm - @cloudant/cloudant
+
+    - https://www.npmjs.com/package/@cloudant/cloudant
 
 - npm - Watson Developer Cloud
 
