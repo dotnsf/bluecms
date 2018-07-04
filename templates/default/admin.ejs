@@ -474,6 +474,9 @@ function getNLC(){
     url: '/trainingNLC',
     success: function( data ){
       console.log( data );
+      if( data.status && data.body ){
+        alert( data.body.status );
+      }
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus );

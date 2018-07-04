@@ -1535,6 +1535,6 @@ function removeHtmlTag( html ){
 }
 
 
-var port = /*appEnv.port ||*/ settings.app_port || 3000;
+var port = settings.app_port || appEnv.port || 3000;
 app.listen( port );
 console.log( 'server started on ' + port );

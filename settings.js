@@ -1,7 +1,7 @@
 exports.db_username = '';
 exports.db_password = '';
 exports.db_name = 'bluecms';
-exports.app_port = 3000;
+exports.app_port = 0;
 exports.app_theme = 'default';
 exports.search_analyzer = 'japanese';
 exports.superSecret = 'welovebluecms';
