@@ -261,7 +261,7 @@ BlueCMS can integrate with IBM Watson NLC(Natural Language Classifier) only if y
 
         - You can check learning status if you click 'NLC status' button.
 
-    - After training complete(status = 'Ready'), you can ask IBM Watson NLC to find appropriate category for your body.
+    - After training complete(status = 'Available'), you can ask IBM Watson NLC to find appropriate category for your body.
 
         - After you input body field in document edit area, you can click 'classify' button to ask IBM Watson NLC. Then you will find IBM Watson NLC's answer in category field.
 
