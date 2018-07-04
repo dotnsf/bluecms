@@ -1,11 +1,9 @@
 // bulk_docs.js
 
 var Cloudantlib = require( '@cloudant/cloudant' );
+var crypto = require( 'crypto' );
 var fs = require( 'fs' );
-var jwt = require( 'jsonwebtoken' );
-var os = require( 'os' );
-var request = require( 'request' );
-var uuidv1 = require( 'uuid/v1' );
+//var jwt = require( 'jsonwebtoken' );
 
 var settings = require( './settings' );
 
@@ -63,8 +61,7 @@ if( user_id && pass && settings.db_username && settings.db_password ){
               pass = value;
               db.get( user_id, { include_docs: true }, function( err, user ){
                 if( user && user.password == pass ){
-                  var token = jwt.sign( user, settings.superSecret, { expiresIn: '25h' } );
-
+                  //var token = jwt.sign( user, settings.superSecret, { expiresIn: '25h' } );
                   fs.readFile( filename, 'utf-8', function( err, body ){
                     var docs = [];
                     var _docs = JSON.parse( body );
@@ -75,10 +72,11 @@ if( user_id && pass && settings.db_username && settings.db_password ){
                       doc.timestamp = ( new Date() ).getTime();
                       docs.push( doc );
                     });
-//console.log( docs );
+console.log( docs );
+                    //db.bulk( { docs: docs }, function( err ){});
                   });
                 }else{
-                  console.log( 'login failed.' );
+                  console.log( 'error: login failed.' );
                 }
               });
             });
@@ -100,12 +98,35 @@ if( user_id && pass && settings.db_username && settings.db_password ){
                   console.log( docs );
                   //db.bulk( { docs: docs }, function( err ){});
                 }
+              }else{
+                console.log( 'error: failed to list docs.' );
               }
             });
           }
         }
+      }else{
+        console.log( 'error: failed to access cloudant db.' );
       }
     });
+  }else{
+    console.log( 'error: failed to initialize cloudant.' );
   }
+}else{
+  console.log( 'usage: $ node bulk_docs.js [-d|-i -f(filename) -u(userid) -p(password)]' );
 }
+
+function generateHash( data ){
+  return new Promise( function( resolve, reject ){
+    if( data ){
+      //. hash 化
+      var sha512 = crypto.createHash( 'sha512' );
+      sha512.update( data );
+      var hash = sha512.digest( 'hex' );
+      resolve( hash );
+    }else{
+      resolve( null );
+    }
+  });
+}
+
 
