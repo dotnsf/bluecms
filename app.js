@@ -391,9 +391,9 @@ app.get( '/attachment/:id', function( req, res ){
 app.get( '/docs', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
   var type = req.query.type;
-  var limit = req.query.limit ? req.query.limit : 0;
-  var offset = req.query.offset ? req.query.offset : 0;
-  console.log( 'GET /docs?type=' + type );
+  var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
+  var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
+  console.log( 'GET /docs?type=' + type + '&limit=' + limit + '&offset=' + offset );
 
   if( db ){
     db.list( { include_docs: true }, function( err, body ){
@@ -408,10 +408,13 @@ app.get( '/docs', function( req, res ){
           if( _doc._id.indexOf( '_' ) !== 0 ){
             if( !type || _doc.type == type ){
               if( type == 'user' ){ _doc.password = '********'; }
+              else if( type == 'document' ){ _doc.user.password = '********'; }
               docs.push( _doc );
             }
           }
         });
+
+        docs.sort( compareByTimestampRev ); //. 時系列逆順ソート
 
         if( offset || limit ){
           docs = docs.slice( offset, offset + limit );
@@ -1408,6 +1411,14 @@ function compareByTimestamp( a, b ){
   var r = 0;
   if( a.timestamp < b.timestamp ){ r = -1; }
   else if( a.timestamp > b.timestamp ){ r = 1; }
+
+  return r;
+}
+
+function compareByTimestampRev( a, b ){
+  var r = 0;
+  if( a.timestamp < b.timestamp ){ r = 1; }
+  else if( a.timestamp > b.timestamp ){ r = -1; }
 
   return r;
 }

@@ -78,17 +78,6 @@ if( !noheader ){
         <a href="http://www.facebook.com/sharer.php?u=<%= config.url %>&amp;t=<%= config.title %>" target="_blank" rel="nowfollow">facebook</a>
       </li>
       -->
-<%
-  if( user != null ){
-%>
-      <li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>
-<%
-  }else{
-%>
-      <li class="nav-item"><a class="nav-link" href="#" onClick="login()"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-<%
-  }
-%>
     </ul>
   </div>
 </nav>

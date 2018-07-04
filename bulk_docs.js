@@ -11,7 +11,7 @@ var insert = true;
 var filename = 'documents.json';
 
 var user_id = null;
-var pass = null; 
+var pass = null;
 
 for( var i = 2; i < process.argv.length; i ++ ){
   if( process.argv[i].charAt( 0 ) == '-' ){
@@ -35,8 +35,8 @@ for( var i = 2; i < process.argv.length; i ++ ){
   }
 }
 
-if( user_id && pass && settings.db_username && settings.db_password ){
-  //. Cloudant 
+if( settings.db_username && settings.db_password ){
+  //. Cloudant
   var params = { account: settings.db_username, password: settings.db_password };
   if( settings.db_hostname ){
     var protocol = settings.db_protocol ? settings.db_protocol : 'http';
@@ -56,31 +56,35 @@ if( user_id && pass && settings.db_username && settings.db_password ){
         if( db ){
 
           if( insert ){
-            //. Login 
-            generateHash( pass ).then( function( value ){
-              pass = value;
-              db.get( user_id, { include_docs: true }, function( err, user ){
-                if( user && user.password == pass ){
-                  //var token = jwt.sign( user, settings.superSecret, { expiresIn: '25h' } );
-                  fs.readFile( filename, 'utf-8', function( err, body ){
-                    var docs = [];
-                    var _docs = JSON.parse( body );
-                    _docs.forEach( function( doc ){
-                      doc.user = user;
-                      doc.type = 'document';
-                      doc.status = 1;
-                      doc.timestamp = ( new Date() ).getTime();
-                      docs.push( doc );
+            if( user_id && pass ){
+              //. Login
+              generateHash( pass ).then( function( value ){
+                pass = value;
+                db.get( user_id, { include_docs: true }, function( err, user ){
+                  if( user && user.password == pass ){
+                    //var token = jwt.sign( user, settings.superSecret, { expiresIn: '25h' } );
+                    fs.readFile( filename, 'utf-8', function( err, body ){
+                      var docs = [];
+                      var _docs = JSON.parse( body );
+                      _docs.forEach( function( doc ){
+                        doc.user = user;
+                        doc.type = 'document';
+                        doc.status = 1;
+                        doc.timestamp = ( new Date() ).getTime();
+                        docs.push( doc );
+                      });
+                      //console.log( docs );
+                      db.bulk( { docs: docs }, function( err ){});
+                      console.log( 'bulk insert done.' );
                     });
-console.log( docs );
-                    //db.bulk( { docs: docs }, function( err ){});
-                  });
-                }else{
-                  console.log( 'error: login failed.' );
-                }
+                  }else{
+                    console.log( 'error: login failed.' );
+                  }
+                });
               });
-            });
-
+            }else{
+              console.log( 'usage: $ node bulk_docs.js [-d|-i -u(userid) -p(password) <-f(filename)>]' );
+            }
           }else{
             db.list( { include_docs: true }, function( err, body ){
               if( !err ){
@@ -95,8 +99,9 @@ console.log( docs );
                 });
 
                 if( docs.length > 0 ){
-                  console.log( docs );
-                  //db.bulk( { docs: docs }, function( err ){});
+                  //console.log( docs );
+                  db.bulk( { docs: docs }, function( err ){});
+                  console.log( 'bulk delete done.' );
                 }
               }else{
                 console.log( 'error: failed to list docs.' );
@@ -112,7 +117,7 @@ console.log( docs );
     console.log( 'error: failed to initialize cloudant.' );
   }
 }else{
-  console.log( 'usage: $ node bulk_docs.js [-d|-i -f(filename) -u(userid) -p(password)]' );
+  console.log( 'usage: $ node bulk_docs.js [-d|-i -u(userid) -p(password) <-f(filename)>]' );
 }
 
 function generateHash( data ){
@@ -128,5 +133,3 @@ function generateHash( data ){
     }
   });
 }
-
-
