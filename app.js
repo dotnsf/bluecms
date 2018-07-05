@@ -404,13 +404,17 @@ app.get( '/docs', function( req, res ){
         res.end();
       }else{
         var docs = [];
+        var category = req.query.category ? req.query.category : null;
         body.rows.forEach( function( doc ){
           var _doc = JSON.parse(JSON.stringify(doc.doc));
           if( _doc._id.indexOf( '_' ) !== 0 ){
             if( !type || _doc.type == type ){
               if( type == 'user' ){ _doc.password = '********'; }
               else if( type == 'document' ){ _doc.user.password = '********'; }
-              docs.push( _doc );
+
+              if( !type || type != 'document' || !category || _doc.category == category ){
+                docs.push( _doc );
+              }
             }
           }
         });
