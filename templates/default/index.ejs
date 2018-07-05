@@ -18,6 +18,7 @@
 <% } %>
 <!-- OGP// -->
 <script>
+var doc_category = '';
 var doc_q = '';
 var doc_limit = 3;
 var doc_page = 0;
@@ -69,7 +70,7 @@ $(function(){
                 + '<div class="doc-body">'
                 + '<p class="doc-text">' + _doc.body + '</p>'
                 + '<p class="doc-text" style="text-align:right;">' + timestamp2datetime( _doc.timestamp ) + '(' + _doc.user.name + ')</p>'
-                + '<p id="doc_category" class="doc-category" style="text-align:right;">' + _doc.category + '</p>'
+                + '<p class="doc-category" style="text-align:right;">' + _doc.category + '</p>'
                 + '</div>'
                 + '</div>';
 
@@ -108,7 +109,7 @@ function getDocuments(){
   var obj = getBusyOverlay( 'viewport', {color:'black', opacity:0.5, text:'loading', style:'text-decoration:blink; font-weight:bold; font-size:12px; color:white;' } );
   $.ajax({
     type: 'GET',
-    url: '/docs?type=document&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ),
+    url: '/docs?type=document&limit=' + doc_limit + '&offset=' + ( doc_limit * doc_page ) + ( doc_category ? '&category=' + doc_category : '' ),
     success: function( result ){
       obj.remove();
       //console.log( result );
@@ -122,7 +123,7 @@ function getDocuments(){
               + '<div class="doc-body">'
               + '<p class="doc-text">' + doc.body + '</p>'
               + '<p class="doc-text" style="text-align:right;">' + timestamp2datetime( doc.timestamp ) + '(' + doc.user.name + ')</p>'
-              + '<p id="doc_category" class="doc-category" style="text-align:right;">' + doc.category + '</p>'
+              + '<p class="doc-category" style="text-align:right;">' + doc.category + '</p>'
               + '</div>'
               + '</div>';
 
@@ -140,6 +141,15 @@ function getDocuments(){
         $('#documents_tile').append( table );
         enablePrev( ( doc_page > 0 ) );
         enableNext( ( documents.length == doc_limit ) );
+
+        $('.doc-category').click( function(){
+          var c = $(this).text();
+          if( c ){
+            doc_category = c;
+            doc_page = 0;
+          }
+          getDocuments();
+        });
       }
     },
     error: function( err ){
@@ -254,6 +264,7 @@ body{
 .doc-category{
   font-size: 20px;
   color: #088;
+  cursor: pointer;
 }
 a.nounderline{
   text-decoration: none;
