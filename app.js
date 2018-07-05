@@ -76,7 +76,7 @@ if( settings.nlc_username && settings.nlc_password ){
 }
 
 app.set( 'superSecret', settings.superSecret );
-app.use( express.static( __dirname + '/public' ) );
+app.use( express.static( __dirname + '/public/' + settings.app_theme ) );
 //app.use( bodyParser.urlencoded( { extended: true, limit: '10mb' } ) );
 //app.use( multer( { dest: './tmp/' } ).single( 'attachment_file' ) );
 app.use( multer( { dest: './tmp/' } ).single( 'attachment_file' ) );

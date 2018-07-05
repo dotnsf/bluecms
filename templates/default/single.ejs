@@ -15,6 +15,11 @@
 <!-- OGP// -->
 <script>
 $(function(){
+  //. Share Icons
+  var enc_title = encodeURIComponent( '<%= title %>' );
+  var enc_url = encodeURIComponent( '<%= config.url %>single/<%= id %>' );
+  $('#navbar').append( '<li class="nav-item"><a href="http://twitter.com/share?url=' + enc_url + '&text=' + enc_title + '" target="_blank"><img src="/images/tw.png"/></a></li>' );
+  $('#navbar').append( '<li class="nav-item"><a href="http://www.facebook.com/sharer.php?u=' + enc_url + '&amp;t=' + enc_title + '" target="_blank" rel="nofollow"><img src="/images/fb.png"/></a></li>' );
 });
 
 function timestamp2datetime( ts ){
