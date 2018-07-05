@@ -1,6 +1,18 @@
 <%- include('./header', {}) %>
 
 <title><%= title %></title>
+<!-- //OGP -->
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="<%= title %>"/>
+<meta property="og:site_name" content="<%= config.title %>"/>
+<meta property="og:url" content="<%= config.url %>single/<%= id %>"/>
+<% if( config && config.image_url ){ %>
+<meta property="og:image" content="<%= config.image_url %>"/> <!-- ?? -->
+<% } %>
+<% if( config && config.desc ){ %>
+<!-- <meta property="og:description" content="<%= config.desc %>"/> -->
+<% } %>
+<!-- OGP// -->
 <script>
 $(function(){
 });
