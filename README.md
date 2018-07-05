@@ -62,6 +62,8 @@ BlueCMS can integrate with IBM Watson NLC(Natural Language Classifier) only if y
 
     - You can choose Lite plan of IBM Cloudant for free.
 
+    - You do **not** need to create database for this application on IBM Cloudant. If target database would not be existed, application would recognize it need to create new one, and also create some required design documents automatically when starting.
+
 - (Option)IBM Watson NLC(Natural Language Classifier) service instance
 
     - You can **not** create this service instance if you would use IBM Cloud Lite Account.
@@ -186,6 +188,65 @@ BlueCMS can integrate with IBM Watson NLC(Natural Language Classifier) only if y
 - ``$ node app``
 
 
+## Run on IBM Cloud
+
+- Confirm your exports.app_port is **0(zero)** in settings.js .
+
+- Install cf command line tool for your platform, if not done this.
+
+    - https://github.com/cloudfoundry/cli/releases
+
+    - Confirm you installed it successfully:
+
+        - ``$ cf -v``
+
+- Login to IBM Cloud with your browser
+
+    - http://bluemix.net/
+
+- Create **IBM Cloudant** service instance for datastore.
+
+    - Assume you create this instance in US-SOUTH region.
+
+    - You can choose lite plan for free(with restriction)
+
+- (Option)Create **IBM Watson Natural Language Classifier** service instance.
+
+    - You need to create it in same region of IBM Cloudant.
+
+    - You can use free tier with limitation.
+
+- Create **SDK for Node.js** runtime instance.
+
+    - Name need to be unique.
+
+    - You need to create it in same region of IBM Cloudant.
+
+    - If you choose single instance with memory size under 512MB, and no other runtime would not be run, cost of this runtime would be under free tier.
+
+- Bind **SDK for Node.js** and **IBM Cloudant**(, and **IBM Watson NLC** ).
+
+    - You can bind runtime and service only if they are created in same region.
+
+- Open terminal or command prompt, and operate following commands:
+
+    - Login to IBM Cloud:
+
+        - ``$ cf login -a https://api.ng.bluemix.net/ -u (Your IBM ID)``
+
+            - If you created your instances in US-EAST region, you need to replace **ng** into **us-east** above.
+
+            - If you created your instances in EU-GB region, you need to replace **ng** into **eu-gb** above.
+
+            - If you created your instances in EU-DE region, you need to replace **ng** into **eu-de** above.
+
+            - If you created your instances in AU-SYD region, you need to replace **ng** into **au-syd** above.
+
+    - Push your code into your runtime:
+
+        - ``$ cf push (Your runtime name)``
+
+
 ## Create very first admin user(s)
 
 - You need to create user(s) with admin role(user.role = 0) just after you run application server at very first time.
@@ -238,13 +299,13 @@ BlueCMS can integrate with IBM Watson NLC(Natural Language Classifier) only if y
 
         - **-f(filename)** : insert documents' file
 
-            - You can ignore this parameter. In that case, **documents.json** would be used.
+            - You can omit this parameter. In that case, **documents.json** would be used.
 
             - Do not put spaces(blanks) between -f and filename. For example, -ffilename
 
             - You can refer documents.json file for this file's format.
 
-- You can bulk-delete all documents with following commands:
+- You can bulk-delete all documents(except for users and attachments) with following commands:
 
     - ``$ node bulk_docs.js -d``
 
