@@ -394,11 +394,18 @@ function updateAttachment(){
   var filename = $('#attachment_filename').val();
   var name = $('#attachment_name').val();
   //var data = { _id: id, type: 'attachment', filename: filename, name: name };
+  /*
   data['_id'] = id;
   data['type'] = 'attachment';
   data['filename'] = filename;
   data['name'] = name;
   if( rev ){ data['_rev'] = rev; }
+  */
+  data.append( '_id', id );
+  data.append( 'type', 'attachment' );
+  data.append( 'filename', filename );
+  data.append( 'name', name );
+  if( rev ){ data.append( '_rev', rev ); }
   //console.log( data );
 
   $.ajax({

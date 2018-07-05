@@ -78,6 +78,7 @@ if( settings.nlc_username && settings.nlc_password ){
 app.set( 'superSecret', settings.superSecret );
 app.use( express.static( __dirname + '/public' ) );
 //app.use( bodyParser.urlencoded( { extended: true, limit: '10mb' } ) );
+//app.use( multer( { dest: './tmp/' } ).single( 'attachment_file' ) );
 app.use( multer( { dest: './tmp/' } ).single( 'attachment_file' ) );
 app.use( bodyParser.urlencoded() );
 app.use( bodyParser.json() );
@@ -664,7 +665,7 @@ app.post( '/attachment', function( req, res ){
         var filetype = req.file.mimetype;
         var filename = req.file.originalname;
         var ext = filetype.split( "/" )[1];
-        var name = req.body.name; //. undefined
+        var name = req.body.name;
 
         if( filename && filepath ){
           var bin = fs.readFileSync( filepath );
@@ -693,7 +694,7 @@ app.post( '/attachment', function( req, res ){
                 res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
                 res.end();
               }else{
-                console.log( body );
+                //console.log( body );
                 fs.unlink( filepath, function( err ){} );
                 res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
                 res.end();
