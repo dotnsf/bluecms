@@ -83,8 +83,8 @@ function getUsers(){
         var tr = "<tr>"
           + "<td>-<input type='hidden' id='user_rev' value=''/></td>"
           + "<td><input type='text' id='user_id' placeholder='<%= __('users.placeholder.id' ) %>'/></td>"
-          + "<td><input type='password' id='user_password' placeholder='<%= __('users.placeholder.password' ) %>'/></td>"
-          + "<td><input type='text' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
+          + "<td><input type='password' style='width:100px;' id='user_password' placeholder='<%= __('users.placeholder.password' ) %>'/></td>"
+          + "<td><input type='text' style='width:100px;' id='user_name' placeholder='<%= __('users.placeholder.name' ) %>'/></td>"
           + "<td><input type='text' id='user_email' placeholder='<%= __('users.placeholder.email' ) %>'/></td>"
           + "<td><input type='text' style='width:100px;' id='user_role' placeholder='<%= __('users.placeholder.role' ) %>'/></td>"
           + "<td>-</td>"
@@ -198,7 +198,7 @@ function getAttachments(){
           + "<td>-<input type='hidden' id='attachment_id' value=''/><input type='hidden' id='attachment_rev' value=''/></td>"
           + "<td><form id='form1' enctype='multipart/form-data'><input type='file' id='attachment_file' name='attachment_file'/></form></td>"
           + "<td><input type='text' id='attachment_filename' placeholder='<%= __('attachments.placeholder.filename' ) %>' readonly/></td>"
-          + "<td><input type='text' id='attachment_name' placeholder='<%= __('attachments.placeholder.name' ) %>'/></td>"
+          + "<td><input type='text' style='width:100px;' id='attachment_name' placeholder='<%= __('attachments.placeholder.name' ) %>'/></td>"
           + "<td>-</td>"
           + "<td>-</td>"
           + "<td><input type='button' class='btn btn-primary' value='<%= __('attachments.buttonlabel.update') %>' onClick='updateAttachment();'/></td>"
@@ -628,11 +628,48 @@ function enableAttachmentsNext( b ){
 }
 </script>
 <style>
+body{
+  background-color: #668;
+}
+.index-header{
+  background-color: #336;
+  color: #ccc;
+}
+.doc{
+  width: 100%;
+  background-color: #668;
+}
+.doc-header{
+  font-size: 20px;
+  background-color: #ccf;
+  color: #666;
+  width: 100%;
+}
+.doc-body{
+  font-size: 20px;
+  background-color: #668;
+  color: #00c;
+  width: 100%;
+}
+.doc-text{
+  font-size: 20px;
+  color: #00c;
+}
+.doc-category{
+  font-size: 20px;
+  color: #0cc;
+}
+.table{
+  background-color: #eee;
+}
+a.nounderline{
+  text-decoration: none;
+}
 </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg index-header">
   <a href="/" class="navbar-brand" id="navbar_title"><%= config.title %></a>
   <div class="collapse navbar-collapse target">
     <ul class="navbar-nav mr-auto">
