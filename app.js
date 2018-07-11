@@ -213,49 +213,71 @@ app.post( '/logout', function( req, res ){
 
 app.post( '/adminuser', function( req, res ){
   res.contentType( 'application/json' );
-  var user_id = req.body.id ? req.body.id : 'admin'; //req.body.id;
-  var password = req.body.password;
-  if( !password ){
-    res.status( 401 );
-    res.write( JSON.stringify( { status: false, result: 'No password provided.' }, 2, null ) );
-    res.end();
-  }else{
-    //. Hash
-    generateHash( password ).then( function( value ){
-      password = value;
 
-      db.get( user_id, { include_docs: true }, function( err, user ){
-        if( err ){
-          var name = req.body.name ? req.body.name : user_id;
-          var email = req.body.email ? req.body.email : 'admin@admin';
-
-          var user = {
-            _id: user_id,
-            type: 'user',
-            password: password,
-            name: name,
-            role: 0,
-            email: email,
-            timestamp: ( new Date() ).getTime()
-          };
-          db.insert( user, function( err, body ){
-            if( err ){
-              res.status( 400 );
-              res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-              res.end();
-            }else{
-              res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
-              res.end();
-            }
-          });
-        }else{
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, result: 'User ' + user_id + ' already existed.' }, 2, null ) );
-          res.end();
+  db.list( { include_docs: true }, function( err, body ){
+    if( err ){
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+      res.end();
+    }else{
+      var found = false;
+      body.rows.forEach( function( doc ){
+        var user = JSON.parse( JSON.stringify( doc.doc ) );
+        if( user._id.indexOf( '_' ) !== 0 && user.type == 'user' && user.role == 0 ){
+          found = true;
         }
       });
-    });
-  }
+      if( found ){
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, message: 'user with role = 0 already existed.' }, 2, null ) );
+        res.end();
+      }else{
+        var user_id = req.body.id ? req.body.id : 'admin'; //req.body.id;
+        var password = req.body.password;
+        if( !password ){
+          res.status( 401 );
+          res.write( JSON.stringify( { status: false, result: 'No password provided.' }, 2, null ) );
+          res.end();
+        }else{
+          //. Hash
+          generateHash( password ).then( function( value ){
+            password = value;
+      
+            db.get( user_id, { include_docs: true }, function( err, user ){
+              if( err ){
+                var name = req.body.name ? req.body.name : user_id;
+                var email = req.body.email ? req.body.email : 'admin@admin';
+
+                var user = {
+                  _id: user_id,
+                  type: 'user',
+                  password: password,
+                  name: name,
+                  role: 0,
+                  email: email,
+                  timestamp: ( new Date() ).getTime()
+                };
+                db.insert( user, function( err, body ){
+                  if( err ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true, message: body }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }else{
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, result: 'User ' + user_id + ' already existed.' }, 2, null ) );
+                res.end();
+              }
+            });
+          });
+        }
+      }
+    }
+  });
 });
 
 app.get( '/single/:id', function( req, res ){
