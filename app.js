@@ -242,7 +242,7 @@ app.post( '/adminuser', function( req, res ){
           //. Hash
           generateHash( password ).then( function( value ){
             password = value;
-      
+
             db.get( user_id, { include_docs: true }, function( err, user ){
               if( err ){
                 var name = req.body.name ? req.body.name : user_id;
@@ -282,8 +282,8 @@ app.post( '/adminuser', function( req, res ){
 
 app.get( '/single/:id', function( req, res ){
   var id = req.params.id;
-  var noheader = ( req.query.noheader ? 1 : 0 );
-  console.log( 'GET /single/' + id + '?noheader=' + noheader );
+  //var noheader = ( req.query.noheader ? 1 : 0 );
+  console.log( 'GET /single/' + id );
 
   if( db ){
     db.get( 'config', { include_docs: true }, function( err, doc ){
@@ -301,9 +301,9 @@ app.get( '/single/:id', function( req, res ){
 
       db.get( id, { include_docs: true }, function( err, doc ){
         if( err ){
-          res.render( 'single', { id: id, config: config, title: '', body: err, category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+          res.render( 'single', { id: id, config: config, title: '', body: err, category: '', datetime: '????-??-??', user: null, desc: null, image_url: null } );
         }else{
-          res.render( 'single', { id: id, config: config, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, noheader: noheader } );
+          res.render( 'single', { id: id, config: config, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, desc: ( doc.desc ? doc.desc : null ), image_url: ( doc.image_url ? doc.image_url : null ) } );
         }
       });
     });
@@ -314,7 +314,7 @@ app.get( '/single/:id', function( req, res ){
       url: '',
       image_url: ''
     };
-    res.render( 'single', { id: id, config: config, title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, noheader: noheader } );
+    res.render( 'single', { id: id, config: config, title: '', body: 'db is failed to initialize.', category: '', datetime: '????-??-??', user: null, desc: null, image_url: null } );
   }
 });
 

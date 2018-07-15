@@ -6,11 +6,15 @@
 <meta property="og:title" content="<%= title %>"/>
 <meta property="og:site_name" content="<%= config.title %>"/>
 <meta property="og:url" content="<%= config.url %>single/<%= id %>"/>
-<% if( config && config.image_url ){ %>
-<meta property="og:image" content="<%= config.image_url %>"/> <!-- ?? -->
+<% if( image_url ){ %>
+<meta property="og:image" content="<%= image_url %>"/>
+<% }else if( config && config.image_url ){ %>
+<meta property="og:image" content="<%= config.image_url %>"/>
 <% } %>
-<% if( config && config.desc ){ %>
-<!-- <meta property="og:description" content="<%= config.desc %>"/> -->
+<% if( desc ){ %>
+<meta property="og:description" content="<%= desc %>"/>
+<% }else if( config && config.desc ){ %>
+<meta property="og:description" content="<%= config.desc %>"/>
 <% } %>
 <!-- OGP// -->
 <script>
@@ -78,9 +82,6 @@ a.nounderline{
 </head>
 <body>
 
-<%
-if( !noheader ){
-%>
 <nav class="navbar navbar-expand-lg index-header">
   <a href="/" class="navbar-brand"><%= config.title %></a>
   <div class="collapse navbar-collapse target">
@@ -98,9 +99,6 @@ if( !noheader ){
     </ul>
   </div>
 </nav>
-<%
-}
-%>
 
 <div class="container" id="document_tile" style="padding:20px 0; font-size:8px;">
   <div class="doc">
@@ -109,13 +107,6 @@ if( !noheader ){
       <p class="doc-text"><%- body %></p>
       <p class="doc-text" style="text-align:right;"><%= datetime %>(<%= ( user ? user.name : '???' ) %>)</p>
       <p id="doc_category" class="doc-category" style="text-align:right;"><%= category %></p>
-<%
-if( noheader ){
-%>
-      <a target="_blank" href="./single/<%= id %>" class="nounderline"><%= __('single.linktitle.another') %></a>
-<%
-}
-%>
     </div>
   </div>
 </div>
