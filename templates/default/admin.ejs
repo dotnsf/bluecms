@@ -158,15 +158,15 @@ function getDocuments(){
         enableDocumentsPrev( ( doc_page > 0 ) );
         enableDocumentsNext( ( documents.length == doc_limit ) );
 
-        var editform = "<table>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.title') %></td><td><input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td></tr>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.category') %></td><td><input type='text' id='document_category' placeholder='<%= __('documents.placeholder.category' ) %>'/></td></tr>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.status') %></td><td><input type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td></tr>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.body') %></td><td><textarea id='document_body' name='document_body'/></textarea></td></tr>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.desc') %></td><td><input type='text' id='document_desc' placeholder='<%= __('documents.placeholder.desc' ) %>'/></td></tr>"
-          + "<tr><td><%= __('admin.body.documents.table.thead.image_url') %></td><td><input type='text' id='document_image_url' placeholder='<%= __('documents.placeholder.image_url' ) %>'/></td></tr>"
-          + "<tr><td colspan='2'><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td></tr>"
-          + "</table>";
+        var editform = "<div class='container' style='padding:20px 0; font-size:8px;'><table class='table'>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.title') %></td><td><input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/><input style='width:100%;' type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.category') %></td><td><input style='width:100%;' type='text' id='document_category' placeholder='<%= __('documents.placeholder.category' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.status') %></td><td><input style='width:100%;' type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.body') %></td><td><textarea id='document_body' name='document_body' style='width:800px;height:200px;'/></textarea></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.desc') %></td><td><input style='width:100%;' type='text' id='document_desc' placeholder='<%= __('documents.placeholder.desc' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.image_url') %></td><td><input style='width:100%;' type='text' id='document_image_url' placeholder='<%= __('documents.placeholder.image_url' ) %>'/></td></tr>"
+          + "<tr><td colspan='2' align='right'><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td></tr>"
+          + "</table></div>";
         $('#documents_table_tbody').parent().parent().append( editform );
         nicEditors.allTextAreas();
       }
