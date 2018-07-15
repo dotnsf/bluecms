@@ -303,7 +303,7 @@ app.get( '/single/:id', function( req, res ){
         if( err ){
           res.render( 'single', { id: id, config: config, title: '', body: err, category: '', datetime: '????-??-??', user: null, desc: null, image_url: null } );
         }else{
-          res.render( 'single', { id: id, config: config, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, desc: ( doc.desc ? doc.desc : null ), image_url: ( doc.image_url ? doc.image_url : null ) } );
+          res.render( 'single', { id: id, config: config, title: doc.title, body: doc.body, category: doc.category, datetime: timestamp2datetime( doc.timestamp ), user: doc.user, desc: ( doc.desc ? doc.desc : '' ), image_url: ( doc.image_url ? doc.image_url : '' ) } );
         }
       });
     });

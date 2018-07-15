@@ -10,9 +10,6 @@ var doc_page = 0;
 var attachment_limit = 10;
 var attachment_page = 0;
 $(function(){
-  //. ログインしている
-  $('#navbar').html( '<li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>' );
-
 <%
 if( user.role == 0 ){
 %>
@@ -33,7 +30,7 @@ function getConfig(){
     url: '/config',
     success: function( result ){
       obj.remove();
-      console.log( result );
+      //console.log( result );
       if( result.config ){
         $('#navbar_title').val( result.config.title );
         $('#config_id').val( result.config._id );
@@ -137,6 +134,7 @@ function getDocuments(){
             + '</tr>';
           $('#documents_table_tbody').append( tr );
         });
+        /*
         var tr = "<tr>"
           + "<td>-<input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/></td>"
           + "<td><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td>"
@@ -149,6 +147,7 @@ function getDocuments(){
           + "</tr>";
         $('#documents_table_tbody').append( tr );
         nicEditors.allTextAreas();
+        */
 
         //. Navigation
         var tr =  '<tr>'
@@ -158,6 +157,18 @@ function getDocuments(){
         $('#documents_table_tbody').append( tr );
         enableDocumentsPrev( ( doc_page > 0 ) );
         enableDocumentsNext( ( documents.length == doc_limit ) );
+
+        var editform = "<table>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.title') %></td><td><input type='hidden' id='document_id' value=''/><input type='hidden' id='document_rev' value=''/><input type='text' id='document_title' placeholder='<%= __('documents.placeholder.title' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.category') %></td><td><input type='text' id='document_category' placeholder='<%= __('documents.placeholder.category' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.status') %></td><td><input type='text' id='document_status' placeholder='<%= __('documents.placeholder.status' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.body') %></td><td><textarea id='document_body' name='document_body'/></textarea></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.desc') %></td><td><input type='text' id='document_desc' placeholder='<%= __('documents.placeholder.desc' ) %>'/></td></tr>"
+          + "<tr><td><%= __('admin.body.documents.table.thead.image_url') %></td><td><input type='text' id='document_image_url' placeholder='<%= __('documents.placeholder.image_url' ) %>'/></td></tr>"
+          + "<tr><td colspan='2'><input type='button' class='btn btn-primary' value='<%= __('documents.buttonlabel.update') %>' onClick='updateDocument();'/></td></tr>"
+          + "</table>";
+        $('#documents_table_tbody').parent().parent().append( editform );
+        nicEditors.allTextAreas();
       }
     },
     error: function( err ){
@@ -332,7 +343,9 @@ function updateDocument(){
   var body = nicEditors.findEditor('document_body').getContent();
   var category = $('#document_category').val();
   var status = $('#document_status').val();
-  var data = { _id: id, type: 'document', title: title, body: body, category: category, status: status };
+  var desc = $('#document_desc').val();
+  var image_url = $('#document_image_url').val();
+  var data = { _id: id, type: 'document', title: title, body: body, category: category, status: status, desc: desc, image_url: image_url };
   if( rev ){ data['_rev'] = rev; }
 
   $.ajax({
@@ -360,6 +373,8 @@ function editDocument(doc){
   $('#document_category').val( doc.category );
   $('#document_status').val( doc.status );
   $('#document_user_name').val( doc.user.name );
+  $('#document_desc').val( doc.desc );
+  $('#document_image_url').val( doc.image_url );
 
   nicEditors.allTextAreas();
 }
@@ -682,108 +697,135 @@ a.nounderline{
     <ul class="navbar-nav mr-auto">
     </ul>
     <ul class="navbar-nav" id="navbar">
+      <li class="nav-item"><a class="nav-link" href="#" title="Logout" onClick="logout()"><span class="glyphicon glyphicon-user"></span> <%= user.name %>(Logout)</a></li>
     </ul>
   </div>
 </nav>
 
+<div class="p-3 container" style="padding:20px 0; font-size:8px;">
+  <!-- //tab buttons -->
+  <ul class="nav nav-tabs">
 <%
 if( user.role == 0 ){
 %>
-<div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="config_table">
-    <tbody id="config_table_tbody">
-      <input type="hidden" id="config_id" value=""/>
-      <input type="hidden" id="config_rev" value=""/>
-      <tr>
-        <td><%= __('admin.body.config.table.tbody.title') %></td>
-        <td><input type="text" style="width:500px;" id="config_title" placeholder="<%= __('config.placeholder.title') %>" value=""/></td>
-        <td rowspan='4'><input type="button" class="btn btn-primary" value="<%= __('config.buttonlabel.update') %>" onClick="updateConfig();"/></td>
-      </tr>
-      <tr>
-        <td><%= __('admin.body.config.table.tbody.desc') %></td>
-        <td><input type="text" style="width:500px;" id="config_desc" placeholder="<%= __('config.placeholder.desc') %>" value=""/></td>
-      </tr>
-      <tr>
-        <td><%= __('admin.body.config.table.tbody.url') %></td>
-        <td><input type="text" style="width:500px;" id="config_url" placeholder="<%= __('config.placeholder.url') %>" value=""/></td>
-      </tr>
-      <tr>
-        <td><%= __('admin.body.config.table.tbody.image_url') %></td>
-        <td><input type="text" style="width:500px;" id="config_image_url" placeholder="<%= __('config.placeholder.image_url') %>" value=""/></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="users_table">
-    <thead class="table-inverse">
-      <tr>
-      <th>#</th>
-      <th><%= __('admin.body.users.table.thead.id') %></th>
-      <th><%= __('admin.body.users.table.thead.password') %></th>
-      <th><%= __('admin.body.users.table.thead.name') %></th>
-      <th><%= __('admin.body.users.table.thead.email') %></th>
-      <th><%= __('admin.body.users.table.thead.role') %></th>
-      <th><%= __('admin.body.users.table.thead.timestamp') %></th>
-      <th><%= __('admin.body.users.table.thead.actions') %></th>
-      </tr>
-    </thead>
-    <tbody id="users_table_tbody">
-    </tbody>
-  </table>
-</div>
+    <li class="nav-item">
+      <a href="#tab-config" class="nav-link active" data-toggle="tab"><%= __('admin.body.tab-button.config') %></a>
+    </li>
+    <li class="nav-item">
+      <a href="#tab-users" class="nav-link" data-toggle="tab"><%= __('admin.body.tab-button.users') %></a>
+    </li>
 <%
 }
 %>
+    <li class="nav-item">
+      <a href="#tab-documents" class="nav-link<% if( user.role != 0 ){ %> active<% } %>" data-toggle="tab"><%= __('admin.body.tab-button.documents') %></a>
+    </li>
+    <li class="nav-item">
+      <a href="#tab-attachments" class="nav-link" data-toggle="tab"><%= __('admin.body.tab-button.attachments') %></a>
+    </li>
+  </ul>
+  <!-- tab buttons// -->
 
-<div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="documents_table">
-    <thead class="table-inverse">
-      <tr>
-      <th>#</th>
-      <th><%= __('admin.body.documents.table.thead.title') %></th>
-      <th><%= __('admin.body.documents.table.thead.body') %></th>
-      <th><%= __('admin.body.documents.table.thead.category') %></th>
-      <th><%= __('admin.body.documents.table.thead.status') %></th>
-      <th><%= __('admin.body.documents.table.thead.user.name') %></th>
-      <th><%= __('admin.body.documents.table.thead.timestamp') %></th>
-      <th><%= __('admin.body.documents.table.thead.actions') %></th>
-      </tr>
-    </thead>
-    <tbody id="documents_table_tbody">
-    </tbody>
-  </table>
-</div>
-
+  <!-- //tab contents -->
+  <div class="tab-content">
 <%
-if( config.nlc ){
+if( user.role == 0 ){
 %>
-<div class="container" style="padding:0 0; font-size:8px;">
-  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.updatenlc') %>" onClick="updateNLC();"/>
-  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.getnlc') %>" onClick="getNLC();"/>
-  <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.classify') %>" onClick="classify();"/>
-</div>
+    <div class="tab-pane active" id="tab-config">
+      <table class="table table-hover table-bordered" id="config_table">
+        <tbody id="config_table_tbody">
+          <input type="hidden" id="config_id" value=""/>
+          <input type="hidden" id="config_rev" value=""/>
+          <tr>
+            <td><%= __('admin.body.config.table.tbody.title') %></td>
+            <td><input type="text" style="width:500px;" id="config_title" placeholder="<%= __('config.placeholder.title') %>" value=""/></td>
+            <td rowspan='4'><input type="button" class="btn btn-primary" value="<%= __('config.buttonlabel.update') %>" onClick="updateConfig();"/></td>
+          </tr>
+          <tr>
+            <td><%= __('admin.body.config.table.tbody.desc') %></td>
+            <td><input type="text" style="width:500px;" id="config_desc" placeholder="<%= __('config.placeholder.desc') %>" value=""/></td>
+          </tr>
+          <tr>
+            <td><%= __('admin.body.config.table.tbody.url') %></td>
+            <td><input type="text" style="width:500px;" id="config_url" placeholder="<%= __('config.placeholder.url') %>" value=""/></td>
+          </tr>
+          <tr>
+            <td><%= __('admin.body.config.table.tbody.image_url') %></td>
+            <td><input type="text" style="width:500px;" id="config_image_url" placeholder="<%= __('config.placeholder.image_url') %>" value=""/></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tab-pane" id="tab-users">
+      <table class="table table-hover table-bordered" id="users_table">
+        <thead class="table-inverse">
+          <tr>
+          <th>#</th>
+          <th><%= __('admin.body.users.table.thead.id') %></th>
+          <th><%= __('admin.body.users.table.thead.password') %></th>
+          <th><%= __('admin.body.users.table.thead.name') %></th>
+          <th><%= __('admin.body.users.table.thead.email') %></th>
+          <th><%= __('admin.body.users.table.thead.role') %></th>
+          <th><%= __('admin.body.users.table.thead.timestamp') %></th>
+          <th><%= __('admin.body.users.table.thead.actions') %></th>
+          </tr>
+        </thead>
+        <tbody id="users_table_tbody">
+        </tbody>
+      </table>
+    </div>
 <%
 }
 %>
-
-<div class="container" style="padding:20px 0; font-size:8px;">
-  <table class="table table-hover table-bordered" id="attachments_table">
-    <thead class="table-inverse">
-      <tr>
-      <th>#</th>
-      <th><%= __('admin.body.attachments.table.thead.file') %></th>
-      <th><%= __('admin.body.attachments.table.thead.filename') %></th>
-      <th><%= __('admin.body.attachments.table.thead.name') %></th>
-      <th><%= __('admin.body.attachments.table.thead.user.name') %></th>
-      <th><%= __('admin.body.attachments.table.thead.timestamp') %></th>
-      <th><%= __('admin.body.attachments.table.thead.actions') %></th>
-      </tr>
-    </thead>
-    <tbody id="attachments_table_tbody">
-    </tbody>
-  </table>
+    <div class="tab-pane<% if( user.role != 0 ){ %> active<% } %>" id="tab-documents">
+      <table class="table table-hover table-bordered" id="documents_table">
+        <thead class="table-inverse">
+          <tr>
+          <th>#</th>
+          <th><%= __('admin.body.documents.table.thead.title') %></th>
+          <th><%= __('admin.body.documents.table.thead.body') %></th>
+          <th><%= __('admin.body.documents.table.thead.category') %></th>
+          <th><%= __('admin.body.documents.table.thead.status') %></th>
+          <th><%= __('admin.body.documents.table.thead.user.name') %></th>
+          <th><%= __('admin.body.documents.table.thead.timestamp') %></th>
+          <th><%= __('admin.body.documents.table.thead.actions') %></th>
+          </tr>
+        </thead>
+        <tbody id="documents_table_tbody">
+        </tbody>
+      </table>
+<%
+if( config.nlc || true ){
+%>
+      <div style="padding:0 0; font-size:8px;">
+        <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.updatenlc') %>" onClick="updateNLC();"/>
+        <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.getnlc') %>" onClick="getNLC();"/>
+        <input type="button" class="btn btn-primary" value="<%= __('documents.buttonlabel.classify') %>" onClick="classify();"/>
+      </div>
+<%
+}
+%>
+    </div>
+    <div class="tab-pane" id="tab-attachments">
+      <table class="table table-hover table-bordered" id="attachments_table">
+        <thead class="table-inverse">
+          <tr>
+          <th>#</th>
+          <th><%= __('admin.body.attachments.table.thead.file') %></th>
+          <th><%= __('admin.body.attachments.table.thead.filename') %></th>
+          <th><%= __('admin.body.attachments.table.thead.name') %></th>
+          <th><%= __('admin.body.attachments.table.thead.user.name') %></th>
+          <th><%= __('admin.body.attachments.table.thead.timestamp') %></th>
+          <th><%= __('admin.body.attachments.table.thead.actions') %></th>
+          </tr>
+        </thead>
+        <tbody id="attachments_table_tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- tab contents// -->
 </div>
+
 
 <%- include('./footer', {}) %>
