@@ -1,5 +1,5 @@
 {
-    "name": "bluccms",
+    "name": "bluecms",
     "version": "0.1.0",
     "scripts": {
         "start": "node app.js"
