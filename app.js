@@ -822,16 +822,22 @@ app.delete( '/user/:id', function( req, res ){
             res.end();
           }else{
             if( user.role == 0 ){
-              db.destroy( id, doc._rev, function( err, body ){
-                if( err ){
-                  res.status( 400 );
-                  res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-                  res.end();
-                }else{
-                  res.write( JSON.stringify( { status: true }, 2, null ) );
-                  res.end();
-                }
-              });
+              if( doc.role === 0 ){
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, message: 'Can not delete admin user.' }, 2, null ) );
+                res.end();
+              }else{
+                db.destroy( id, doc._rev, function( err, body ){
+                  if( err ){
+                    res.status( 400 );
+                    res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+                    res.end();
+                  }else{
+                    res.write( JSON.stringify( { status: true }, 2, null ) );
+                    res.end();
+                  }
+                });
+              }
             }else{
               res.status( 400 );
               res.write( JSON.stringify( { status: false, message: 'No permission.' }, 2, null ) );
